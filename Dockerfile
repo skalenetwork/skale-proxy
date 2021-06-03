@@ -21,16 +21,10 @@ RUN echo "daemon off;" >> /etc/nginx/nginx.conf
 # nginx site conf
 ADD ./nginx-site.conf /etc/nginx/sites-available/default
 
-
 ADD ./periodic_config_update.py /etc/periodic_config_update.py
 
 # Initialization and Startup Script
 ADD ./start.sh /start.sh
 RUN chmod 755 /start.sh
-
-# private expose
-EXPOSE 3306
-EXPOSE 80
-EXPOSE 443
 
 CMD ["/bin/bash", "/start.sh"]
