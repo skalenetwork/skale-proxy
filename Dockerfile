@@ -11,7 +11,7 @@ RUN apt-get update
 RUN apt-get -y upgrade
 
 # Basic Requirements
-RUN apt-get -y install mysql-server mysql-client nginx pwgen python-setuptools curl git unzip
+RUN apt-get -y install nginx pwgen python-setuptools curl git unzip
 
 
 # nginx config
@@ -25,17 +25,19 @@ ADD ./nginx-site.conf /etc/nginx/sites-available/default
 # Supervisor Config
 RUN /usr/bin/easy_install supervisor
 RUN /usr/bin/easy_install supervisor-stdout
-ADD ./supervisord.conf /etc/supervisord.conf
 
-# Wordpress Initialization and Startup Script
+RUN apt-get -y install python3 python3-pip
+
+ADD ./supervisord.conf /etc/supervisord.conf
+ADD ./periodic_config_update.py /etc/periodic_config_update.py
+
+# Initialization and Startup Script
 ADD ./start.sh /start.sh
 RUN chmod 755 /start.sh
 
 # private expose
 EXPOSE 3306
 EXPOSE 80
-
-# volume for mysql database and wordpress install
-VOLUME ["/var/lib/mysql", "/usr/share/nginx/www"]
+EXPOSE 443
 
 CMD ["/bin/bash", "/start.sh"]
