@@ -1,0 +1,17 @@
+version: '3'
+services:
+  skale-proxy:
+    image: skale-proxy 
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./sgx_data:/usr/src/sdk/sgx_data
+      -  /dev/urandom:/dev/random
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "4"
+    restart: unless-stopped
+
