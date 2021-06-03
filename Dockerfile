@@ -11,8 +11,7 @@ RUN apt-get update
 RUN apt-get -y upgrade
 
 # Basic Requirements
-RUN apt-get -y install nginx pwgen python-setuptools curl git unzip
-
+RUN apt-get -y install nginx pwgen python3 python3-pip curl git unzip vim
 
 # nginx config
 RUN sed -i -e"s/keepalive_timeout\s*65/keepalive_timeout 2/" /etc/nginx/nginx.conf
@@ -22,13 +21,7 @@ RUN echo "daemon off;" >> /etc/nginx/nginx.conf
 # nginx site conf
 ADD ./nginx-site.conf /etc/nginx/sites-available/default
 
-# Supervisor Config
-RUN /usr/bin/easy_install supervisor
-RUN /usr/bin/easy_install supervisor-stdout
 
-RUN apt-get -y install python3 python3-pip
-
-ADD ./supervisord.conf /etc/supervisord.conf
 ADD ./periodic_config_update.py /etc/periodic_config_update.py
 
 # Initialization and Startup Script
