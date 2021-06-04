@@ -18,11 +18,15 @@ endpoints.append("testnet-16.skalenodes.com:10131")
 endpoints.append("testnet-15.skalenodes.com:10195")
 
 
-def print_loadbalacing_group(_endpoints, _f) :
-    print("upstream backend {\n", _f)
+def print_loadbalacing_group(_chain_name, _endpoints, _f):
+    print("upstream " + _chain_name + " {\n", _f)
     for endpoint in _endpoints:
         print("   server " + endpoint + ";\n", _f)
     print("}\n", _f)
+    print("	location /mainnet/" + _chain_name + "{\n", _f)
+    print("	    proxy_http_version 1.1;\n", _f)
+    print("     proxy_pass http://" + _chain_name + "/;\n", _f)
+    print("    }\n", _f)
 
 
 def print_config_file(_endpoints):
@@ -34,11 +38,7 @@ def print_config_file(_endpoints):
         print("	root /usr/share/nginx/www;\n", f)
         print("	index index.php index.html index.htm;\n", f)
         print("	server_name localhost;\n", f)
-        print_loadbalacing_group(endpoints, f)
-        print("	location /mainnet/chain1 {\n", f)
-        print("	    proxy_http_version 1.1;\n", f)
-        print("     proxy_pass http://backend/;\n", f)
-        print("    }\n", f)
+        print_loadbalacing_group("chain1", endpoints, f)
         print("}\n", f)
 
 
