@@ -1,4 +1,5 @@
 # skale-proxy
 
-skale-proxy is a public service that provides proxied and load-balanced JSON-RPC endpoints for SKALE chains 
+skale-proxy is a public service that provides proxied and load-balanced JSON-RPC endpoints for SKALE chains.
 
+It is based on Nginx reverse proxy. 
