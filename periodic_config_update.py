@@ -9,7 +9,8 @@ from shutil import copyfile
 
 
 class ChainInfo:
-    def __init__(self, _chain_name, _list_of_domain_endpoints):
+    def __init__(self, _network: str, _chain_name: str, _list_of_domain_endpoints: list):
+        self.network = _network
         self.chain_name = _chain_name
         self.list_of_domain_endpoints = _list_of_domain_endpoints
 
@@ -29,14 +30,14 @@ def print_global_server_config(_f):
 
 def print_group_definition(_chain_info: ChainInfo, _f):
     _f.write("upstream " + _chain_info.chain_name + " {\n")
-#    _f.write("   ip_hash;\n")
+    _f.write("   ip_hash;\n")
     for endpoint in _chain_info.list_of_domain_endpoints:
         _f.write("   server " + endpoint + " max_fails=1 fail_timeout=600s;\n")
     _f.write("}\n")
 
 
 def print_loadbalacing_config_for_chain(_chain_info: ChainInfo, _f):
-    _f.write("	location /mainnet/" + _chain_info.chain_name + " {\n")
+    _f.write("	location /"+_chain_info.network + "/" + _chain_info.chain_name + " {\n")
     _f.write("	      proxy_http_version 1.1;\n")
     _f.write("	      proxy_pass http://" + _chain_info.chain_name + "/;\n")
     _f.write("	    }\n")
@@ -75,7 +76,7 @@ chain_infos = list()
 
 # TODO: get real list here
 
-chain_info = ChainInfo("chain1", endpoints)
+chain_info = ChainInfo("mainnet", "chain1", endpoints)
 chain_infos.append(chain_info)
 
 # let nginx start)
