@@ -1,15 +1,11 @@
 import time
 import filecmp
 import os
+import sys
 import os.path
 import subprocess
 from os import path
-
 from shutil import copyfile
-
-
-CONFIG_FILE = "/etc/nginx/sites-available/default"
-TMP_CONFIG_FILE = "/tmp/tmp.config"
 
 
 class ChainInfo:
@@ -18,14 +14,20 @@ class ChainInfo:
         self.list_of_domain_endpoints = _list_of_domain_endpoints
 
 
-endpoints = list()
-endpoints.append("testnet-16.skalenodes.com:10131")
-endpoints.append("testnet-15.skalenodes.com:10195")
-
-chain_info = ChainInfo("chain1", endpoints)
+def run(_command):
+    print(">" + _command)
+    subprocess.check_call(_command, shell=True)
 
 
-def print_loadbalacing_group(_chain_info : ChainInfo, _f):
+def print_global_server_config(_f):
+    print("server {\n", _f)
+    print("	listen 80;\n", _f)
+    print("	root /usr/share/nginx/www;\n", _f)
+    print("	index index.php index.html index.htm;\n", _f)
+    print("	server_name localhost;\n", _f)
+
+
+def print_loadbalacing_config_for_chain(_chain_info: ChainInfo, _f):
     print("upstream " + _chain_info.chain_name + " {\n", _f)
     for endpoint in _chain_info.list_of_domain_endpoints:
         print("   server " + endpoint + ";\n", _f)
@@ -36,33 +38,45 @@ def print_loadbalacing_group(_chain_info : ChainInfo, _f):
     print("    }\n", _f)
 
 
-def print_config_file(_chain_info):
+def print_config_file(_chain_infos: list):
     if os.path.exists(TMP_CONFIG_FILE):
         os.remove(TMP_CONFIG_FILE)
     with open(TMP_CONFIG_FILE, 'w') as f:
-        print("server {\n", f)
-        print("	listen 80;\n", f)
-        print("	root /usr/share/nginx/www;\n", f)
-        print("	index index.php index.html index.htm;\n", f)
-        print("	server_name localhost;\n", f)
-        print_loadbalacing_group(_chain_info, f)
+        print_global_server_config(f)
+        for chain_info in _chain_infos:
+            print_loadbalacing_config_for_chain(chain_info, f)
         print("}\n", f)
-
-
-def run(_command):
-    print(">" + _command)
-    subprocess.check_call(_command, shell=True)
 
 
 def copy_config_file_if_modified():
     if (not path.exists(CONFIG_FILE)) or (not filecmp.cmp(CONFIG_FILE, TMP_CONFIG_FILE, shallow=False)):
+        print("New config file. Reloading server", file=sys.stderr)
         os.remove(CONFIG_FILE)
         copyfile(TMP_CONFIG_FILE, CONFIG_FILE)
         run("/usr/sbin/nginx -s reload")
 
 
+CONFIG_FILE = "/etc/nginx/sites-available/default"
+TMP_CONFIG_FILE = "/tmp/tmp.config"
+
+endpoints = list()
+endpoints.append("testnet-16.skalenodes.com:10131")
+endpoints.append("testnet-15.skalenodes.com:10195")
+
+chain_infos = list()
+
+# TODO: get real list here
+
+chain_info = ChainInfo("chain1", endpoints)
+chain_infos.append(chain_info)
+
+# let nginx start)
+time.sleep(10)
+
 while True:
-    print_config_file(endpoints)
+    print("Checking Config file ")
+    print_config_file(chain_infos)
     copy_config_file_if_modified()
-    time.sleep(5)
-    print("loop")
+    print("monitor loop iteration")
+    sys.stdout.flush()
+    time.sleep(20)
