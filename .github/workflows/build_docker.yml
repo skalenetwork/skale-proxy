@@ -10,8 +10,6 @@ jobs:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
     steps:
-      - name: Fail, if older Github Actions machine. Click "Re-run jobs"
-        run: cat /proc/cpuinfo | grep avx512
       - name: Login to docker
         run: docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD}
       - uses: actions/checkout@v1
@@ -22,8 +20,7 @@ jobs:
       - name: deploy docker image
         if: |
           contains(github.ref, 'develop') || contains(github.ref, 'beta') ||
-          contains(github.ref, 'master') ||
-          contains(github.ref, 'SECURE_ENCLAVE_CHANGES')
+          contains(github.ref, 'master')
         run : |
           export BRANCH=${GITHUB_REF##*/}
           echo "Branch $BRANCH"
