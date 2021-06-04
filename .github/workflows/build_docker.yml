@@ -16,7 +16,7 @@ jobs:
       - name: submodule update
         run: git submodule update --init --recursive
       - name: build and deploy test image
-        run: python3 scripts/docker_build.py Dockerfile sgxwallet ${GITHUB_SHA}
+        run: python3 scripts/docker_build.py Dockerfile skale-proxy ${GITHUB_SHA}
       - name: deploy docker image
         if: |
           contains(github.ref, 'develop') || contains(github.ref, 'beta') ||
@@ -31,8 +31,8 @@ jobs:
           echo "Version $VERSION"
           export RELEASE=true
           echo "::set-env name=RELEASE::$RELEASE"
-          bash ./scripts/build_image.sh Dockerfile sgxwallet
-          bash ./scripts/publish_image.sh sgxwallet
+          bash ./scripts/build_image.sh Dockerfile skale-proxy
+          bash ./scripts/publish_image.sh skale-proxy
         env:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: true
       - name: Create Release
