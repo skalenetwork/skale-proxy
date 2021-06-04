@@ -12,13 +12,19 @@ CONFIG_FILE = "/etc/nginx/sites-available/default"
 TMP_CONFIG_FILE = "/tmp/tmp.config"
 
 
-def print_config_file():
+endpoints = list()
+
+endpoints.append("testnet-16.skalenodes.com:10131")
+endpoints.append("testnet-15.skalenodes.com:10195")
+
+
+def print_config_file(_endpoints):
     if os.path.exists(TMP_CONFIG_FILE):
         os.remove(TMP_CONFIG_FILE)
     with open(TMP_CONFIG_FILE, 'w') as f:
         print("upstream backend {\n", f)
-        print("   server testnet-16.skalenodes.com:10131;\n", f)
-        print("   server testnet-15.skalenodes.com:10195;\n", f)
+        for endpoint in _endpoints:
+            print("   server " + endpoint + ";\n", f)
         print("}\n", f)
         print("server {\n", f)
         print("	listen 80;\n", f)
@@ -45,7 +51,7 @@ def copy_config_file_if_modified():
 
 
 while True:
-    print_config_file()
+    print_config_file(endpoints)
     copy_config_file_if_modified()
     time.sleep(5)
     print("loop")
