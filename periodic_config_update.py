@@ -29,7 +29,7 @@ def print_global_server_config(_f):
 
 def print_group_definition(_chain_info: ChainInfo, _f):
     _f.write("upstream " + _chain_info.chain_name + " {\n")
-    _f.write("   ip_hash;\n")
+#    _f.write("   ip_hash;\n")
     for endpoint in _chain_info.list_of_domain_endpoints:
         _f.write("   server " + endpoint + " max_fails=1 fail_timeout=600s;\n")
     _f.write("}\n")
