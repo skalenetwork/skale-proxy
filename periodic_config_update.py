@@ -18,19 +18,23 @@ endpoints.append("testnet-16.skalenodes.com:10131")
 endpoints.append("testnet-15.skalenodes.com:10195")
 
 
+def print_loadbalacing_group(_endpoints, _f) :
+    print("upstream backend {\n", _f)
+    for endpoint in _endpoints:
+        print("   server " + endpoint + ";\n", _f)
+    print("}\n", _f)
+
+
 def print_config_file(_endpoints):
     if os.path.exists(TMP_CONFIG_FILE):
         os.remove(TMP_CONFIG_FILE)
     with open(TMP_CONFIG_FILE, 'w') as f:
-        print("upstream backend {\n", f)
-        for endpoint in _endpoints:
-            print("   server " + endpoint + ";\n", f)
-        print("}\n", f)
         print("server {\n", f)
         print("	listen 80;\n", f)
         print("	root /usr/share/nginx/www;\n", f)
         print("	index index.php index.html index.htm;\n", f)
         print("	server_name localhost;\n", f)
+        print_loadbalacing_group(endpoints, f)
         print("	location /mainnet/chain1 {\n", f)
         print("	    proxy_http_version 1.1;\n", f)
         print("     proxy_pass http://backend/;\n", f)
