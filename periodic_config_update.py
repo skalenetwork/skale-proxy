@@ -29,8 +29,9 @@ def print_global_server_config(_f):
 
 def print_group_definition(_chain_info: ChainInfo, _f):
     _f.write("upstream " + _chain_info.chain_name + " {\n")
+    _f.write("   ip_hash;\n")
     for endpoint in _chain_info.list_of_domain_endpoints:
-        _f.write("   server " + endpoint + ";\n")
+        _f.write("   server " + endpoint + " max_fails=1 fail_timeout=600s;\n")
     _f.write("}\n")
 
 
@@ -58,6 +59,7 @@ def copy_config_file_if_modified():
     if (not path.exists(CONFIG_FILE)) or (not filecmp.cmp(CONFIG_FILE, TMP_CONFIG_FILE, shallow=False)):
         print("New config file. Reloading server")
         os.remove(CONFIG_FILE)
+        copyfile(TMP_CONFIG_FILE, CONFIG_FILE)
         copyfile(TMP_CONFIG_FILE, CONFIG_FILE)
         run("/usr/sbin/nginx -s reload")
 
