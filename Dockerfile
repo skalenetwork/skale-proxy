@@ -19,7 +19,7 @@ RUN sed -i -e"s/keepalive_timeout 2/keepalive_timeout 2;\n\tclient_max_body_size
 RUN echo "daemon off;" >> /etc/nginx/nginx.conf
 
 # nginx site conf
-ADD ./nginx-site.conf /etc/nginx/sites-available/default
+ADD sample/nginx-site.conf /etc/nginx/sites-available/default
 
 ADD ./periodic_config_update.py /etc/periodic_config_update.py
 

@@ -1,7 +1,7 @@
 version: '3'
 services:
   skale-proxy:
-    image: skale-proxy 
+    image: skale-proxy50 
     ports:
       - "80:80"
       - "443:443"
