@@ -1,35 +1,13 @@
-# Skale-proxy
+# skale-proxy
 
-skale-proxy is a public service that provides proxied and load-balanced JSON-RPC endpoints for SKL chains.
-
-It is based on Nginx reverse proxy that receives SKALE chain names and IP addresses of SKL nodes from SKALE manager. 
-
-# Endpoints
-
-For SKALE mainnet the endpoints that proxy provides are in the form of 
-
-http://proxy.skale.network/mainnet/CHAIN_NAME
-
-or
-
-https://proxy.skale.network/mainnet/CHAIN_NAME
-
-For SKL testnet the endpoints that proxy provides are in the form of 
-
-http://proxy.skale.network/testnet/CHAIN_NAME
-
-or
-
-https://proxy.skale.network/testnet/CHAIN_NAME
-
+skale-proxy is a public service that provides proxied and load-balanced JSON-RPC endpoints for SKALE chains 
 
 
 # running
 
 Simply run
 
-docker-compose pull
-docker-compuse up
+docker-compose pull && docker-compose up
 
 
-And then wait until skale-proxy reads schain info from blockchain and starts
+And then wait until skale-proxy reads schain info from blockchain and starts.
