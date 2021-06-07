@@ -41,7 +41,7 @@ def print_global_server_config(_f, _use_ssl: bool):
         _f.write("	listen 80;\n")
     _f.write("	root /usr/share/nginx/www;\n")
     _f.write("	index index.php index.html index.htm;\n")
-    _f.write("	server_name " + PROXY_FULL_DOMAIN_NAME + ";\n")
+    _f.write("	server_name " + PROXY_FULL_HOST_NAME + ";\n")
 
 
 def print_group_definition(_chain_info: ChainInfo, _f):
