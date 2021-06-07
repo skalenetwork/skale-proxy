@@ -11,6 +11,7 @@ CONFIG_FILE = "/etc/nginx/sites-available/default"
 TMP_CONFIG_FILE = "/tmp/tmp.config"
 CERT_FILE = "/data/server.crt"
 KEY_FILE = "/data/server.key"
+SERVER_NAME_FILE = "/data/server_name.txt"
 
 
 class ChainInfo:
