@@ -29,8 +29,8 @@ def print_global_server_config(_f, _use_ssl: bool):
     _f.write("server {\n")
     if _use_ssl:
         _f.write("	listen 443 ssl;\n")
-        _f.write("	ssl_certificate " + CERT_FILE + "\n")
-        _f.write("  ssl_certificate_key " + KEY_FILE + "\n")
+        _f.write("	ssl_certificate " + CERT_FILE + ";\n")
+        _f.write("  ssl_certificate_key " + KEY_FILE + ";\n")
         _f.write("	ssl_verify_client off;\n")
     else:
         _f.write("	listen 80;\n")
@@ -63,6 +63,7 @@ def print_config_file(_chain_infos: list):
         print_global_server_config(f, False)
         for chain_info in _chain_infos:
             print_loadbalacing_config_for_chain(chain_info, f)
+        f.write("}\n")
         print_global_server_config(f, True)
         for chain_info in _chain_infos:
             print_loadbalacing_config_for_chain(chain_info, f)
