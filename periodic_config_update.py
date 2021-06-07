@@ -11,9 +11,9 @@ CONFIG_FILE = "/etc/nginx/sites-available/default"
 TMP_CONFIG_FILE = "/tmp/tmp.config"
 CERT_FILE = "/data/server.crt"
 KEY_FILE = "/data/server.key"
-PROXY_FULL_DOMAIN_NAME = os.environ.get("PROXY_FULL_HOST_NAME")
+PROXY_FULL_HOST_NAME = os.environ.get("PROXY_FULL_HOST_NAME")
 
-if SERVER_DOMAIN_NAME is None:
+if PROXY_FULL_HOST_NAME is None:
     print("Fatal error: PROXY_FULL_HOST_NAME is not set. Exiting ...")
     exit(-3)
 
