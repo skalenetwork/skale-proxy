@@ -11,7 +11,7 @@ CONFIG_FILE = "/etc/nginx/sites-available/default"
 TMP_CONFIG_FILE = "/tmp/tmp.config"
 CERT_FILE = "/data/server.crt"
 KEY_FILE = "/data/server.key"
-SERVER_DOMAIN_NAME = os.environ.get("PROXY_FULL_HOST_NAME")
+PROXY_FULL_DOMAIN_NAME = os.environ.get("PROXY_FULL_HOST_NAME")
 
 if SERVER_DOMAIN_NAME is None:
     print("Fatal error: PROXY_FULL_HOST_NAME is not set. Exiting ...")
@@ -41,7 +41,7 @@ def print_global_server_config(_f, _use_ssl: bool):
         _f.write("	listen 80;\n")
     _f.write("	root /usr/share/nginx/www;\n")
     _f.write("	index index.php index.html index.htm;\n")
-    _f.write("	server_name localhost;\n")
+    _f.write("	server_name " + PROXY_FULL_DOMAIN_NAME + ";\n")
 
 
 def print_group_definition(_chain_info: ChainInfo, _f):
