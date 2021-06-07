@@ -24,6 +24,7 @@ ADD abi/skale-manager-1.8.0-mainnet-abi.json /etc/skale-manager-1.8.0-mainnet-ab
 
 RUN pip3 install web3==5.13.1
 
+ADD ./endpoints.py /etc/endpoints.py
 ADD ./periodic_config_update.py /etc/periodic_config_update.py
 
 # Initialization and Startup Script
