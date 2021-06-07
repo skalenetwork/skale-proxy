@@ -21,6 +21,8 @@ RUN echo "daemon off;" >> /etc/nginx/nginx.conf
 # nginx site conf
 ADD sample/nginx-site.conf /etc/nginx/sites-available/default
 
+RUN pip3 install web3==5.13.1
+
 ADD ./periodic_config_update.py /etc/periodic_config_update.py
 
 # Initialization and Startup Script
