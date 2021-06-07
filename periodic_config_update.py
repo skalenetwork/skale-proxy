@@ -1,4 +1,5 @@
 import time
+import json
 import filecmp
 import os
 import sys
@@ -11,11 +12,20 @@ CONFIG_FILE = "/etc/nginx/sites-available/default"
 TMP_CONFIG_FILE = "/tmp/tmp.config"
 CERT_FILE = "/data/server.crt"
 KEY_FILE = "/data/server.key"
+RESULTS_PATH = "/tmp/chains.json"
 PROXY_FULL_HOST_NAME = os.environ.get("PROXY_FULL_HOST_NAME")
 
 if PROXY_FULL_HOST_NAME is None:
     print("Fatal error: PROXY_FULL_HOST_NAME is not set. Exiting ...")
     exit(-3)
+
+if not os.path.exists(RESULTS_PATH):
+    print("Fatal error: Chains file does not exist. Exiting ...")
+    exit(-4)
+
+
+jsonFile = open(RESULTS_PATH,)
+parsedJson = json.load(jsonFile)
 
 
 class ChainInfo:
