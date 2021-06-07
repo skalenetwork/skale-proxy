@@ -1,12 +1,15 @@
 version: '3'
 services:
   skale-proxy:
+    environment:
+      - PROXY_FULL_HOST_NAME=api.skalenodes.com
     image: skalenetwork/skale-proxy:develop-latest
     ports:
       - "80:80"
       - "443:443"
     volumes:
       -  /dev/urandom:/dev/random
+      -  ./data:/data
     logging:
       driver: json-file
       options:
