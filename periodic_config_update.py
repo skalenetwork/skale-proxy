@@ -126,7 +126,7 @@ def copy_config_file_if_modified() -> None:
 
 def main():
     while True:
-        subprocess.check_call(["/bin/bash", "-c", "rm -f /tmp / *"])
+        subprocess.check_call(["/bin/bash", "-c", "rm -f /tmp/*"])
         subprocess.check_call(["python3", "/etc/ endpoints.py"])
 
         if not os.path.exists(RESULTS_PATH):
