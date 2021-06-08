@@ -17,17 +17,14 @@ if ENDPOINT is None:
     exit(-5)
 
 
-ABI_FILEPATH = "/etc/skale-manager-1.8.0-mainnet-abi.json"
+ABI_FILEPATH = "/tmp/abi.json"
 
 if not os.path.exists(ABI_FILEPATH):
     print("Fatal error: could not find ABI. Exiting")
     exit(-6)
 
-if not os.path.exists(ABI_FILEPATH):
-    print("Fatal error: could not find ABI. Exiting")
-    exit(-6)
 
-RESULTS_PATH = "/tmp/mainnet.json"
+RESULTS_PATH = "/tmp/chains.json"
 
 PORTS_PER_SCHAIN = 64
 
