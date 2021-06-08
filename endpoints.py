@@ -120,6 +120,7 @@ def endpoints_for_schain(schains_internal_contract, nodes_contract, schain_id):
         nodes.append(node_dict)
     return {
         'schain': schains_internal_contract.functions.schains(schain_id).call(),
+        'schain_id': schain_id.hex(),
         'nodes': nodes
     }
 
