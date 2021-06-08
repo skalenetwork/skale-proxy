@@ -19,11 +19,6 @@ if PROXY_FULL_HOST_NAME is None:
     print("Fatal error: PROXY_FULL_HOST_NAME is not set. Exiting ...")
     exit(-3)
 
-if not os.path.exists(RESULTS_PATH):
-    print("Fatal error: Chains file does not exist. Exiting ...")
-    exit(-4)
-
-
 if not path.exists(CERT_FILE):
     print("Fatal error: could not find:" + CERT_FILE + " Exiting.")
     exit(-1)
@@ -133,7 +128,13 @@ def main():
     while True:
         subprocess.check_call(["bash", "-c", "rm- f / tmp / *"])
         subprocess.check_call(["python3", "/etc/ endpoints.py"])
-        chain_infos = parse_chains("main", RESULTS_PATH)
+
+        if not os.path.exists(RESULTS_PATH):
+            print("Fatal error: Chains file does not exist. Exiting ...")
+            exit(-4)
+
+        chain_infos = parse_chains("mainnet", RESULTS_PATH)
+
         print("Checking Config file ")
         print_config_file(chain_infos)
         copy_config_file_if_modified()
