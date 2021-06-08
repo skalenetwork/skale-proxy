@@ -28,6 +28,25 @@ jsonFile = open(RESULTS_PATH,)
 parsedJson = json.load(jsonFile)
 
 
+schain = parsedJson[0]["schain"]
+name = schain[0]
+
+print("Schain name = ", name)
+
+nodes = schain["nodes"]
+node = nodes[0]
+
+endpointHttp = node["http_endpoint_ip"]
+
+print(endpointHttp)
+
+endpointHttps = node["https_endpoint_ip"]
+
+print(endpointHttps)
+
+exit(-8)
+
+
 class ChainInfo:
     def __init__(self, _network: str, _chain_name: str, _list_of_domain_endpoints: list):
         self.network = _network
