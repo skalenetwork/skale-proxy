@@ -126,12 +126,15 @@ def copy_config_file_if_modified() -> None:
 
 def main():
     while True:
+        print("Updating chain info ...")
         subprocess.check_call(["/bin/bash", "-c", "rm -f /tmp/*"])
-        subprocess.check_call(["python3", "/etc/ endpoints.py"])
+        subprocess.check_call(["python3", "/etc/endpoints.py"])
 
         if not os.path.exists(RESULTS_PATH):
             print("Fatal error: Chains file does not exist. Exiting ...")
             exit(-4)
+
+        print("Generating config file ...")
 
         chain_infos = parse_chains("mainnet", RESULTS_PATH)
 
