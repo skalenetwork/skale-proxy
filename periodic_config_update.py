@@ -51,7 +51,7 @@ def parse_chains(_network: str, _path: str) -> list:
             endpoint_http = node["http_endpoint_ip"]
             print("Http endpoint: " + endpoint_http)
             list_of_http_endpoints.append(endpoint_http)
-            endpoint_https = node["Https endpoint: " + "https_endpoint_ip"]
+            endpoint_https = node["https_endpoint_ip"]
             print(endpoint_https)
             list_of_https_endpoints.append(endpoint_https)
 
@@ -131,9 +131,6 @@ def copy_config_file_if_modified() -> None:
 
 def main():
 
-    # let nginx start)
-    time.sleep(30)
-
     chain_infos = parse_chains("main", RESULTS_PATH)
 
     print("Checking Config file ")
@@ -141,3 +138,7 @@ def main():
     copy_config_file_if_modified()
     print("monitor loop iteration")
     sys.stdout.flush()
+
+
+# run main
+main()
