@@ -12,7 +12,7 @@ CONFIG_FILE = "/etc/nginx/sites-available/default"
 TMP_CONFIG_FILE = "/tmp/tmp.config"
 CERT_FILE = "/data/server.crt"
 KEY_FILE = "/data/server.key"
-RESULTS_PATH = "/tmp/chains.json"
+RESULTS_PATH = "/tmp/mainnet.json"
 PROXY_FULL_HOST_NAME = os.environ.get("PROXY_FULL_HOST_NAME")
 
 if PROXY_FULL_HOST_NAME is None:
@@ -129,6 +129,8 @@ def main():
         print("Updating chain info ...")
         subprocess.check_call(["/bin/bash", "-c", "rm -f /tmp/*"])
         subprocess.check_call(["python3", "/etc/endpoints.py"])
+        subprocess.check_call(["/bin/bash", "-c", "mkdirs /usr/share/nginx/www"])
+        subprocess.check_call(["/bin/bash", "-c", "cp -f /tmp/mainnet/.json /usr/share/nginx/www"])
 
         if not os.path.exists(RESULTS_PATH):
             print("Fatal error: Chains file does not exist. Exiting ...")

@@ -27,7 +27,7 @@ if not os.path.exists(ABI_FILEPATH):
     print("Fatal error: could not find ABI. Exiting")
     exit(-6)
 
-RESULTS_PATH = "/tmp/chains.json"
+RESULTS_PATH = "/tmp/mainnet.json"
 
 PORTS_PER_SCHAIN = 64
 
