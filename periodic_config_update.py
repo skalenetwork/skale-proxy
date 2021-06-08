@@ -48,10 +48,10 @@ def parse_chains(_network: str, _path: str) -> list:
         list_of_https_endpoints = list()
 
         for node in nodes:
-            endpoint_http = node["http_endpoint_ip"]
+            endpoint_http = node["http_endpoint_domain"]
             print("Http endpoint: " + endpoint_http)
             list_of_http_endpoints.append(endpoint_http)
-            endpoint_https = node["https_endpoint_ip"]
+            endpoint_https = node["https_endpoint_domain"]
             print(endpoint_https)
             list_of_https_endpoints.append(endpoint_https)
 
