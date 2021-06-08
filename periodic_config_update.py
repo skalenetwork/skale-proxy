@@ -129,7 +129,7 @@ def main():
         print("Updating chain info ...")
         subprocess.check_call(["/bin/bash", "-c", "rm -f /tmp/*"])
         subprocess.check_call(["python3", "/etc/endpoints.py"])
-        subprocess.check_call(["/bin/bash", "-c", "mkdirs /usr/share/nginx/www"])
+        subprocess.check_call(["/bin/bash", "-c", "mkdir -p /usr/share/nginx/www"])
         subprocess.check_call(["/bin/bash", "-c", "cp -f /tmp/mainnet.json /usr/share/nginx/www"])
 
         if not os.path.exists(RESULTS_PATH):
