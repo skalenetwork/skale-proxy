@@ -91,8 +91,8 @@ def print_global_server_config(_f, _use_ssl: bool) -> None:
 def print_group_definition(_chain_info: ChainInfo, _f) -> None:
     _f.write("upstream " + _chain_info.chain_name + " {\n")
     _f.write("   ip_hash;\n")
-    for endpoint in _chain_info.list_of_https_endpoints:
-        _f.write("   server " + endpoint + " max_fails=1 fail_timeout=600s;\n")
+    for endpoint in _chain_info.list_of_http_endpoints:
+        _f.write("   server " + endpoint[7:] + " max_fails=1 fail_timeout=600s;\n")
     _f.write("}\n")
 
 
@@ -130,14 +130,16 @@ def copy_config_file_if_modified() -> None:
 
 
 def main():
-
-    chain_infos = parse_chains("main", RESULTS_PATH)
-
-    print("Checking Config file ")
-    print_config_file(chain_infos)
-    copy_config_file_if_modified()
-    print("monitor loop iteration")
-    sys.stdout.flush()
+    while True:
+        subprocess.check_call(["bash", "-c", "rm- f / tmp / *"])
+        subprocess.check_call(["python3", "/etc/ endpoints.py"])
+        chain_infos = parse_chains("main", RESULTS_PATH)
+        print("Checking Config file ")
+        print_config_file(chain_infos)
+        copy_config_file_if_modified()
+        print("monitor loop iteration")
+        sys.stdout.flush()
+        time.sleep(6000)
 
 
 # run main
