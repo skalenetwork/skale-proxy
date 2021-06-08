@@ -24,42 +24,57 @@ if not os.path.exists(RESULTS_PATH):
     exit(-4)
 
 
-jsonFile = open(RESULTS_PATH,)
-parsedJson = json.load(jsonFile)
+if not path.exists(CERT_FILE):
+    print("Fatal error: could not find:" + CERT_FILE + " Exiting.")
+    exit(-1)
+
+if not path.exists(KEY_FILE):
+    print("Fatal error: could not find:" + KEY_FILE + " Exiting.")
+    exit(-2)
 
 
-schain = parsedJson[0]["schain"]
-name = schain[0]
+def parse_chains(_network: str, _path: str) -> list:
+    json_file = open(_path,)
+    parsed_json = json.load(json_file)
 
-print("Schain name = ", name)
+    chain_infos = list()
 
-nodes = schain["nodes"]
-node = nodes[0]
+    for schain in parsed_json:
+        name = schain["schain"][0]
+        print("Schain name = ", name)
+        nodes = schain["nodes"]
 
-endpointHttp = node["http_endpoint_ip"]
+        list_of_http_endpoints = list()
+        list_of_https_endpoints = list()
 
-print(endpointHttp)
+        for node in nodes:
+            endpoint_http = node["http_endpoint_ip"]
+            print("Http endpoint: " + endpoint_http)
+            list_of_http_endpoints.append(endpoint_http)
+            endpoint_https = node["Https endpoint: " + "https_endpoint_ip"]
+            print(endpoint_https)
+            list_of_https_endpoints.append(endpoint_https)
 
-endpointHttps = node["https_endpoint_ip"]
+        chain_infos.append(ChainInfo(_network, name, list_of_http_endpoints, list_of_https_endpoints))
 
-print(endpointHttps)
-
-exit(-8)
+    return chain_infos
 
 
 class ChainInfo:
-    def __init__(self, _network: str, _chain_name: str, _list_of_domain_endpoints: list):
+    def __init__(self, _network: str, _chain_name: str, _list_of_http_endpoints: list,
+                 _list_of_https_endpoints: list):
         self.network = _network
         self.chain_name = _chain_name
-        self.list_of_domain_endpoints = _list_of_domain_endpoints
+        self.list_of_http_endpoints = _list_of_http_endpoints
+        self.list_of_https_endpoints = _list_of_https_endpoints
 
 
-def run(_command):
+def run(_command) -> None:
     print(">" + _command)
     subprocess.check_call(_command, shell=True)
 
 
-def print_global_server_config(_f, _use_ssl: bool):
+def print_global_server_config(_f, _use_ssl: bool) -> None:
     _f.write("server {\n")
     if _use_ssl:
         _f.write("	listen 443 ssl;\n")
@@ -73,22 +88,22 @@ def print_global_server_config(_f, _use_ssl: bool):
     _f.write("	server_name " + PROXY_FULL_HOST_NAME + ";\n")
 
 
-def print_group_definition(_chain_info: ChainInfo, _f):
+def print_group_definition(_chain_info: ChainInfo, _f) -> None:
     _f.write("upstream " + _chain_info.chain_name + " {\n")
     _f.write("   ip_hash;\n")
-    for endpoint in _chain_info.list_of_domain_endpoints:
+    for endpoint in _chain_info.list_of_https_endpoints:
         _f.write("   server " + endpoint + " max_fails=1 fail_timeout=600s;\n")
     _f.write("}\n")
 
 
-def print_loadbalacing_config_for_chain(_chain_info: ChainInfo, _f):
+def print_loadbalacing_config_for_chain(_chain_info: ChainInfo, _f) -> None:
     _f.write("	location /"+_chain_info.network + "/" + _chain_info.chain_name + " {\n")
     _f.write("	      proxy_http_version 1.1;\n")
     _f.write("	      proxy_pass http://" + _chain_info.chain_name + "/;\n")
     _f.write("	    }\n")
 
 
-def print_config_file(_chain_infos: list):
+def print_config_file(_chain_infos: list) -> None:
     if os.path.exists(TMP_CONFIG_FILE):
         os.remove(TMP_CONFIG_FILE)
     with open(TMP_CONFIG_FILE, 'w') as f:
@@ -105,7 +120,7 @@ def print_config_file(_chain_infos: list):
         f.close()
 
 
-def copy_config_file_if_modified():
+def copy_config_file_if_modified() -> None:
     if (not path.exists(CONFIG_FILE)) or (not filecmp.cmp(CONFIG_FILE, TMP_CONFIG_FILE, shallow=False)):
         print("New config file. Reloading server")
         os.remove(CONFIG_FILE)
@@ -114,34 +129,15 @@ def copy_config_file_if_modified():
         run("/usr/sbin/nginx -s reload")
 
 
-endpoints = list()
-endpoints.append("testnet-16.skalenodes.com:10131")
-endpoints.append("testnet-15.skalenodes.com:10195")
+def main():
 
-chain_infos = list()
+    # let nginx start)
+    time.sleep(30)
 
-# TODO: get real list here
+    chain_infos = parse_chains("main", RESULTS_PATH)
 
-chain_info = ChainInfo("mainnet", "chain1", endpoints)
-chain_infos.append(chain_info)
-
-# let nginx start)
-
-
-time.sleep(30)
-
-if not path.exists(CERT_FILE):
-    print("Fatal error: could not find:" + CERT_FILE + " Exiting.")
-    exit(-1)
-
-if not path.exists(KEY_FILE):
-    print("Fatal error: could not find:" + KEY_FILE + " Exiting.")
-    exit(-2)
-
-while True:
     print("Checking Config file ")
     print_config_file(chain_infos)
     copy_config_file_if_modified()
     print("monitor loop iteration")
     sys.stdout.flush()
-    time.sleep(20)
