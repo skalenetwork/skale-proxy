@@ -118,9 +118,10 @@ def endpoints_for_schain(schains_internal_contract, nodes_contract, schain_id):
         compose_endpoints(node_dict, endpoint_type='domain')
 
         nodes.append(node_dict)
+    schain = schains_internal_contract.functions.schains(schain_id).call()
     return {
-        'schain': schains_internal_contract.functions.schains(schain_id).call(),
-        'schain_id': schain_id.hex(),
+        'schain': schain,
+        'schain_id': schain_name_to_id(schain[0])[:15],
         'nodes': nodes
     }
 
