@@ -13,6 +13,8 @@ RUN apt-get -y upgrade
 # Basic Requirements
 RUN apt-get -y install nginx pwgen python3 python3-pip curl git unzip vim
 
+RUN pip3 install web3==5.13.1
+
 # nginx config
 RUN sed -i -e"s/keepalive_timeout\s*65/keepalive_timeout 2/" /etc/nginx/nginx.conf
 RUN sed -i -e"s/keepalive_timeout 2/keepalive_timeout 2;\n\tclient_max_body_size 100m/" /etc/nginx/nginx.conf
@@ -20,12 +22,11 @@ RUN echo "daemon off;" >> /etc/nginx/nginx.conf
 
 # nginx site conf
 ADD sample/nginx-site.conf /etc/nginx/sites-available/default
-ADD abi/skale-manager-1.8.0-mainnet-abi.json /etc/skale-manager-1.8.0-mainnet-abi.json
-
-RUN pip3 install web3==5.13.1
+COPY abi /etc/
 
 ADD ./endpoints.py /etc/endpoints.py
 ADD ./periodic_config_update.py /etc/periodic_config_update.py
+ADD ./VERSION /etc/VERSION
 
 # Initialization and Startup Script
 ADD ./start.sh /start.sh

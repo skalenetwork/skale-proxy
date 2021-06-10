@@ -5,17 +5,26 @@ skale-proxy is a public service that provides proxied and load-balanced JSON-RPC
 
 # running
 
-1. Set `FULL_PROXY_DOMAIN_NAME` and `ETH_ENDPOINT` in .env to the domain name of your proxy, and run `source .env`.
 
-2. Copy server.crt and server.key to the `data/` directory. The certificate needs to be issued to `FULL_PROXY_DOMAIN_NAME`.
+1. Place you ABI json file into abi directory
 
-3. Ensure the correct ABI of SKALE Manager is placed in the `abi/` folder.
+2. Set 'ABI_FILENAME directory' in docker-compose.yml to the name of the ABI file.
+      
+3. Set 'PROXY_FULL_HOST_NAME' in docker-compose.yml to the domain name of your proxy.
 
-3. Simply run
+4. Set ENDPOINT_PREFIX in 'docker-compose.ymlv to the endpoint prefix (must be non-empty!)
 
-`docker-compose pull && docker-compose up`
+5. Set 'ETH_ENDPOINT' in docker-compose to your ETH main net endpoint.
 
-And then wait until skale-proxy reads schain info from blockchain and starts.
+6. Createb 'datadir' and copy 'server.crt' and 'server.key' to it. 
+   The certificate need to be issued to 'PROXY_FULL_HOST_NAME'.
+   
+
+7. Run 'docker-compose pull && docker-compose up'  andf wait around a minute until skale-proxy reads schain info from blockchain and starts.
+
+8.  Try 'http://PROXY_FULL_HOST_NAME/api.json' . You should be able to see API descriptions. 
+
+ Voila!
 
 # local development
 

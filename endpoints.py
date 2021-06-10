@@ -17,15 +17,12 @@ if ENDPOINT is None:
     exit(-5)
 
 
-ABI_FILEPATH = "/etc/skale-manager-1.8.0-mainnet-abi.json"
+ABI_FILEPATH = "/tmp/abi.json"
 
 if not os.path.exists(ABI_FILEPATH):
     print("Fatal error: could not find ABI. Exiting")
     exit(-6)
 
-if not os.path.exists(ABI_FILEPATH):
-    print("Fatal error: could not find ABI. Exiting")
-    exit(-6)
 
 RESULTS_PATH = "/tmp/chains.json"
 
@@ -118,8 +115,10 @@ def endpoints_for_schain(schains_internal_contract, nodes_contract, schain_id):
         compose_endpoints(node_dict, endpoint_type='domain')
 
         nodes.append(node_dict)
+    schain = schains_internal_contract.functions.schains(schain_id).call()
     return {
-        'schain': schains_internal_contract.functions.schains(schain_id).call(),
+        'schain': schain,
+        'schain_id': schain_name_to_id(schain[0])[:15],
         'nodes': nodes
     }
 

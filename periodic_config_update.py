@@ -17,30 +17,72 @@ PROXY_FULL_HOST_NAME = os.environ.get("PROXY_FULL_HOST_NAME")
 
 if PROXY_FULL_HOST_NAME is None:
     print("Fatal error: PROXY_FULL_HOST_NAME is not set. Exiting ...")
+    exit(-2)
+
+ENDPPOINT_PREFIX = os.environ.get("ENDPOINT_PREFIX")
+
+if ENDPPOINT_PREFIX is None:
+    print("Fatal error: ENDPOINT_PREFIX is not set. Exiting ...")
     exit(-3)
 
-if not os.path.exists(RESULTS_PATH):
-    print("Fatal error: Chains file does not exist. Exiting ...")
+
+ABI_FILENAME = os.environ.get("ABI_FILENAME")
+
+if ABI_FILENAME is None:
+    print("Fatal error: ABI_FILENAME is not set. Exiting ...")
     exit(-4)
 
+if not path.exists(CERT_FILE):
+    print("Fatal error: could not find:" + CERT_FILE + " Exiting.")
+    exit(-5)
 
-jsonFile = open(RESULTS_PATH,)
-parsedJson = json.load(jsonFile)
+if not path.exists(KEY_FILE):
+    print("Fatal error: could not find:" + KEY_FILE + " Exiting.")
+    exit(-6)
+
+
+def parse_chains(_network: str, _path: str) -> list:
+    json_file = open(_path,)
+    parsed_json = json.load(json_file)
+
+    chain_infos = list()
+
+    for schain in parsed_json:
+        name = schain["schain"][0]
+        print("Schain name = ", name)
+        nodes = schain["nodes"]
+
+        list_of_http_endpoints = list()
+        list_of_https_endpoints = list()
+
+        for node in nodes:
+            endpoint_http = node["http_endpoint_domain"]
+            print("Http endpoint: " + endpoint_http)
+            list_of_http_endpoints.append(endpoint_http)
+            endpoint_https = node["https_endpoint_domain"]
+            print(endpoint_https)
+            list_of_https_endpoints.append(endpoint_https)
+
+        chain_infos.append(ChainInfo(_network, name, list_of_http_endpoints, list_of_https_endpoints))
+
+    return chain_infos
 
 
 class ChainInfo:
-    def __init__(self, _network: str, _chain_name: str, _list_of_domain_endpoints: list):
+    def __init__(self, _network: str, _chain_name: str, _list_of_http_endpoints: list,
+                 _list_of_https_endpoints: list):
         self.network = _network
         self.chain_name = _chain_name
-        self.list_of_domain_endpoints = _list_of_domain_endpoints
+        self.list_of_http_endpoints = _list_of_http_endpoints
+        self.list_of_https_endpoints = _list_of_https_endpoints
 
 
-def run(_command):
+def run(_command) -> None:
     print(">" + _command)
     subprocess.check_call(_command, shell=True)
 
 
-def print_global_server_config(_f, _use_ssl: bool):
+def print_global_server_config(_f, _use_ssl: bool) -> None:
     _f.write("server {\n")
     if _use_ssl:
         _f.write("	listen 443 ssl;\n")
@@ -54,22 +96,22 @@ def print_global_server_config(_f, _use_ssl: bool):
     _f.write("	server_name " + PROXY_FULL_HOST_NAME + ";\n")
 
 
-def print_group_definition(_chain_info: ChainInfo, _f):
+def print_group_definition(_chain_info: ChainInfo, _f) -> None:
     _f.write("upstream " + _chain_info.chain_name + " {\n")
     _f.write("   ip_hash;\n")
-    for endpoint in _chain_info.list_of_domain_endpoints:
-        _f.write("   server " + endpoint + " max_fails=1 fail_timeout=600s;\n")
+    for endpoint in _chain_info.list_of_http_endpoints:
+        _f.write("   server " + endpoint[7:] + " max_fails=1 fail_timeout=600s;\n")
     _f.write("}\n")
 
 
-def print_loadbalacing_config_for_chain(_chain_info: ChainInfo, _f):
+def print_loadbalacing_config_for_chain(_chain_info: ChainInfo, _f) -> None:
     _f.write("	location /"+_chain_info.network + "/" + _chain_info.chain_name + " {\n")
     _f.write("	      proxy_http_version 1.1;\n")
     _f.write("	      proxy_pass http://" + _chain_info.chain_name + "/;\n")
     _f.write("	    }\n")
 
 
-def print_config_file(_chain_infos: list):
+def print_config_file(_chain_infos: list) -> None:
     if os.path.exists(TMP_CONFIG_FILE):
         os.remove(TMP_CONFIG_FILE)
     with open(TMP_CONFIG_FILE, 'w') as f:
@@ -86,7 +128,7 @@ def print_config_file(_chain_infos: list):
         f.close()
 
 
-def copy_config_file_if_modified():
+def copy_config_file_if_modified() -> None:
     if (not path.exists(CONFIG_FILE)) or (not filecmp.cmp(CONFIG_FILE, TMP_CONFIG_FILE, shallow=False)):
         print("New config file. Reloading server")
         os.remove(CONFIG_FILE)
@@ -95,34 +137,32 @@ def copy_config_file_if_modified():
         run("/usr/sbin/nginx -s reload")
 
 
-endpoints = list()
-endpoints.append("testnet-16.skalenodes.com:10131")
-endpoints.append("testnet-15.skalenodes.com:10195")
+def main():
+    while True:
+        print("Updating chain info ...")
+        subprocess.check_call(["/bin/bash", "-c", "rm -f /tmp/*"])
+        subprocess.check_call(["/bin/bash", "-c",
+                              "cp /etc/" + ABI_FILENAME + " /tmp/abi.json"])
+        subprocess.check_call(["python3", "/etc/endpoints.py"])
+        subprocess.check_call(["/bin/bash", "-c", "mkdir -p /usr/share/nginx/www"])
+        subprocess.check_call(["/bin/bash", "-c", "cp -f /tmp/chains.json /usr/share/nginx/www/api.json"])
+        subprocess.check_call(["/bin/bash", "-c", "cp -f /etc/VERSION /usr/share/nginx/www/VERSION.txt"])
 
-chain_infos = list()
+        if not os.path.exists(RESULTS_PATH):
+            print("Fatal error: Chains file does not exist. Exiting ...")
+            exit(-4)
 
-# TODO: get real list here
+        print("Generating config file ...")
 
-chain_info = ChainInfo("mainnet", "chain1", endpoints)
-chain_infos.append(chain_info)
+        chain_infos = parse_chains(ENDPPOINT_PREFIX, RESULTS_PATH)
 
-# let nginx start)
+        print("Checking Config file ")
+        print_config_file(chain_infos)
+        copy_config_file_if_modified()
+        print("monitor loop iteration")
+        sys.stdout.flush()
+        time.sleep(6000)
 
 
-time.sleep(30)
-
-if not path.exists(CERT_FILE):
-    print("Fatal error: could not find:" + CERT_FILE + " Exiting.")
-    exit(-1)
-
-if not path.exists(KEY_FILE):
-    print("Fatal error: could not find:" + KEY_FILE + " Exiting.")
-    exit(-2)
-
-while True:
-    print("Checking Config file ")
-    print_config_file(chain_infos)
-    copy_config_file_if_modified()
-    print("monitor loop iteration")
-    sys.stdout.flush()
-    time.sleep(20)
+# run main
+main()
