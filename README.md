@@ -16,7 +16,7 @@ skale-proxy is a public service that provides proxied and load-balanced JSON-RPC
 
 5. Set ETH_ENDPOINT in docker-compose to your ETH main net endpoint.
 
-6. Create datadir and copy server.crt and server.key to it. 
+6. Create 'data' directory and copy server.crt and server.key to it. 
    The certificate need to be issued to PROXY_FULL_HOST_NAME.
    
 
