@@ -12,7 +12,7 @@ skale-proxy is a public service that provides proxied and load-balanced JSON-RPC
       
 3. Set 'PROXY_FULL_HOST_NAME' in docker-compose.yml to the domain name of your proxy.
 
-4. Set 'ENDPOINT_PREFIX' in 'docker-compose.ymlv to the endpoint prefix (must be non-empty!)
+4. Set 'ENDPOINT_PREFIX' in 'docker-compose.yml' to the endpoint prefix (must be non-empty!)
 
 5. Set 'ETH_ENDPOINT' in docker-compose to your ETH main net endpoint.
 
