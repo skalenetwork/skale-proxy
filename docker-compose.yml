@@ -3,8 +3,10 @@ services:
   skale-proxy:
     environment:
       - PROXY_FULL_HOST_NAME=api.skalenodes.com
-      - ETH_ENDPOINT=https://mainnet.infura.io/v3/99a12a3b78e54627a8aa694bb94dce69
-    image: skale-proxy215
+      - ETH_ENDPOINT=https://mainnet.infura.io/v3/XYZ
+      - ENDPOINT_PREFIX=mainnet
+      - ABI_FILENAME=skale-manager-1.8.0-mainnet-abi.json
+    image: skalenetwork/skale-proxy:develop-latest
     ports:
       - "80:80"
       - "443:443"
