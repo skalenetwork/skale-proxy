@@ -20,7 +20,7 @@ RUN echo "daemon off;" >> /etc/nginx/nginx.conf
 
 # nginx site conf
 ADD sample/nginx-site.conf /etc/nginx/sites-available/default
-ADD abi/skale-manager-1.8.0-mainnet-abi.json /etc/skale-manager-1.8.0-mainnet-abi.json
+ADD abi/abi.json /etc/abi.json
 
 RUN pip3 install web3==5.13.1
 

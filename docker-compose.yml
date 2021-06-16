@@ -2,9 +2,12 @@ version: '3'
 services:
   skale-proxy:
     environment:
-      - PROXY_FULL_HOST_NAME=api.skalenodes.com
-      - ETH_ENDPOINT=https://mainnet.infura.io/v3/99a12a3b78e54627a8aa694bb94dce69
-    image: skale-proxy215
+      PROXY_FULL_HOST_NAME: ${PROXY_FULL_HOST_NAME}
+      ETH_ENDPOINT: ${ENDPOINT}
+    image: skale-proxy:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "80:80"
       - "443:443"

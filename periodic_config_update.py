@@ -92,7 +92,8 @@ def print_group_definition(_chain_info: ChainInfo, _f) -> None:
 
 
 def print_loadbalacing_config_for_chain(_chain_info: ChainInfo, _f) -> None:
-    _f.write("	location /"+_chain_info.network + "/" + _chain_info.chain_name + " {\n")
+    _f.write("	location /v1/" + _chain_info.chain_name + " {\n")
+    # _f.write("	location /" + _chain_info.chain_name + " {\n")
     _f.write("	      proxy_http_version 1.1;\n")
     _f.write("	      proxy_pass http://" + _chain_info.chain_name + "/;\n")
     _f.write("	    }\n")
@@ -129,10 +130,10 @@ def main():
         print("Updating chain info ...")
         subprocess.check_call(["/bin/bash", "-c", "rm -f /tmp/*"])
         subprocess.check_call(["/bin/bash", "-c",
-                              "cp /etc/skale-manager-1.8.0-mainnet-abi.json /tmp/abi.json"])
+                              "cp /etc/abi.json /tmp/abi.json"])
         subprocess.check_call(["python3", "/etc/endpoints.py"])
         subprocess.check_call(["/bin/bash", "-c", "mkdir -p /usr/share/nginx/www"])
-        subprocess.check_call(["/bin/bash", "-c", "cp -f /tmp/chains.json /usr/share/nginx/www/mainnet.json"])
+        subprocess.check_call(["/bin/bash", "-c", "cp -f /tmp/chains.json /usr/share/nginx/www/chains.json"])
 
         if not os.path.exists(RESULTS_PATH):
             print("Fatal error: Chains file does not exist. Exiting ...")
@@ -140,7 +141,7 @@ def main():
 
         print("Generating config file ...")
 
-        chain_infos = parse_chains("mainnet", RESULTS_PATH)
+        chain_infos = parse_chains("net", RESULTS_PATH)
 
         print("Checking Config file ")
         print_config_file(chain_infos)
