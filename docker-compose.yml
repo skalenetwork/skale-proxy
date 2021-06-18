@@ -4,6 +4,8 @@ services:
     environment:
       PROXY_FULL_HOST_NAME: ${PROXY_FULL_HOST_NAME}
       ETH_ENDPOINT: ${ENDPOINT}
+      ENDPOINT_PREFIX: mainnet
+      ABI_FILENAME: skale-manager-1.8.0-mainnet-abi.json
     image: skale-proxy:latest
     build:
       context: .

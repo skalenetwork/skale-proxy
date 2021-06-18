@@ -17,15 +17,28 @@ PROXY_FULL_HOST_NAME = os.environ.get("PROXY_FULL_HOST_NAME")
 
 if PROXY_FULL_HOST_NAME is None:
     print("Fatal error: PROXY_FULL_HOST_NAME is not set. Exiting ...")
+    exit(-2)
+
+ENDPPOINT_PREFIX = os.environ.get("ENDPOINT_PREFIX")
+
+if ENDPPOINT_PREFIX is None:
+    print("Fatal error: ENDPOINT_PREFIX is not set. Exiting ...")
     exit(-3)
+
+
+ABI_FILENAME = os.environ.get("ABI_FILENAME")
+
+if ABI_FILENAME is None:
+    print("Fatal error: ABI_FILENAME is not set. Exiting ...")
+    exit(-4)
 
 if not path.exists(CERT_FILE):
     print("Fatal error: could not find:" + CERT_FILE + " Exiting.")
-    exit(-1)
+    exit(-5)
 
 if not path.exists(KEY_FILE):
     print("Fatal error: could not find:" + KEY_FILE + " Exiting.")
-    exit(-2)
+    exit(-6)
 
 
 def parse_chains(_network: str, _path: str) -> list:
@@ -134,6 +147,7 @@ def main():
         subprocess.check_call(["python3", "/etc/endpoints.py"])
         subprocess.check_call(["/bin/bash", "-c", "mkdir -p /usr/share/nginx/www"])
         subprocess.check_call(["/bin/bash", "-c", "cp -f /tmp/chains.json /usr/share/nginx/www/chains.json"])
+        subprocess.check_call(["/bin/bash", "-c", "cp -f /etc/VERSION /usr/share/nginx/www/VERSION.txt"])
 
         if not os.path.exists(RESULTS_PATH):
             print("Fatal error: Chains file does not exist. Exiting ...")
@@ -141,7 +155,7 @@ def main():
 
         print("Generating config file ...")
 
-        chain_infos = parse_chains("net", RESULTS_PATH)
+        chain_infos = parse_chains(ENDPPOINT_PREFIX, RESULTS_PATH)
 
         print("Checking Config file ")
         print_config_file(chain_infos)
