@@ -54,6 +54,7 @@ def parse_chains(_network: str, _path: str) -> list:
 
         list_of_http_endpoints = list()
         list_of_https_endpoints = list()
+        list_of_domains = list()
 
         for node in nodes:
             endpoint_http = node["http_endpoint_domain"]
@@ -62,19 +63,21 @@ def parse_chains(_network: str, _path: str) -> list:
             endpoint_https = node["https_endpoint_domain"]
             print(endpoint_https)
             list_of_https_endpoints.append(endpoint_https)
+            list_of_domains.append(node['domain'])
 
-        chain_infos.append(ChainInfo(_network, name, list_of_http_endpoints, list_of_https_endpoints))
+        chain_infos.append(ChainInfo(_network, name, list_of_http_endpoints, list_of_https_endpoints, list_of_domains))
 
     return chain_infos
 
 
 class ChainInfo:
     def __init__(self, _network: str, _chain_name: str, _list_of_http_endpoints: list,
-                 _list_of_https_endpoints: list):
+                 _list_of_https_endpoints: list, _list_of_domains: list):
         self.network = _network
         self.chain_name = _chain_name
         self.list_of_http_endpoints = _list_of_http_endpoints
         self.list_of_https_endpoints = _list_of_https_endpoints
+        self.list_of_domains = _list_of_domains
 
 
 def run(_command) -> None:
@@ -104,6 +107,22 @@ def print_group_definition(_chain_info: ChainInfo, _f) -> None:
     _f.write("}\n")
 
 
+def print_storage_group_definition(_chain_info: ChainInfo, _f) -> None:
+    _f.write("upstream storage-" + _chain_info.chain_name + " {\n")
+    _f.write("   ip_hash;\n")
+    for domain in _chain_info.list_of_domains:
+        _f.write("   server " + domain + " max_fails=1 fail_timeout=600s;\n")
+    _f.write("}\n")
+
+
+def print_storage_proxy_for_chain(_chain_info: ChainInfo, _f) -> None:
+    _f.write("	location /fs/" + _chain_info.chain_name + " {\n")
+    _f.write("	      rewrite /fs/" + _chain_info.chain_name + "/(.*) /" + _chain_info.chain_name + "/$1 break;\n")
+    _f.write("	      proxy_http_version 1.1;\n")
+    _f.write("	      proxy_pass http://storage-" + _chain_info.chain_name + "/;\n")
+    _f.write("	    }\n")
+
+
 def print_loadbalacing_config_for_chain(_chain_info: ChainInfo, _f) -> None:
     _f.write("	location /"+_chain_info.network + "/" + _chain_info.chain_name + " {\n")
     _f.write("	      proxy_http_version 1.1;\n")
@@ -117,13 +136,16 @@ def print_config_file(_chain_infos: list) -> None:
     with open(TMP_CONFIG_FILE, 'w') as f:
         for chain_info in _chain_infos:
             print_group_definition(chain_info, f)
+            print_storage_group_definition(chain_info, f)
         print_global_server_config(f, False)
         for chain_info in _chain_infos:
             print_loadbalacing_config_for_chain(chain_info, f)
+            print_storage_proxy_for_chain(chain_info, f)
         f.write("}\n")
         print_global_server_config(f, True)
         for chain_info in _chain_infos:
             print_loadbalacing_config_for_chain(chain_info, f)
+            print_storage_proxy_for_chain(chain_info, f)
         f.write("}\n")
         f.close()
 
