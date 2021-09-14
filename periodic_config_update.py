@@ -165,7 +165,7 @@ def main():
         print("Updating chain info ...")
         subprocess.check_call(["/bin/bash", "-c", "rm -f /tmp/*"])
         subprocess.check_call(["/bin/bash", "-c",
-                              "cp /etc/abi.json /tmp/abi.json"])
+                              "cp /etc/manager.json /tmp/abi.json"])
         subprocess.check_call(["python3", "/etc/endpoints.py"])
         subprocess.check_call(["/bin/bash", "-c", "mkdir -p /usr/share/nginx/www"])
         subprocess.check_call(["/bin/bash", "-c", "cp -f /tmp/chains.json /usr/share/nginx/www/chains.json"])
