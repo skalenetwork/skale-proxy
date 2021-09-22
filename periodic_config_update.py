@@ -98,6 +98,15 @@ def print_global_server_config(_f, _use_ssl: bool) -> None:
     _f.write("	index index.php index.html index.htm;\n")
     _f.write("	server_name " + PROXY_FULL_HOST_NAME + ";\n")
 
+    _f.write("	location / {\n")
+    _f.write("		proxy_http_version 1.1;\n")
+    _f.write("		proxy_pass  http://127.0.0.1:5000/;\n")
+    _f.write("		proxy_set_header Upgrade $http_upgrade;\n")
+    _f.write("		proxy_set_header Connection 'upgrade';\n")
+    _f.write("		proxy_set_header Host $host;\n")
+    _f.write("		proxy_cache_bypass $http_upgrade;\n")
+    _f.write("	}\n")
+
 
 def print_group_definition(_chain_info: ChainInfo, _f) -> None:
     _f.write("upstream " + _chain_info.chain_name + " {\n")

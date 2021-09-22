@@ -1,0 +1,4 @@
+[submodule "proxy-ui"]
+	path = proxy-ui
+	url = https://github.com/skalenetwork/proxy-ui.git
+	branch = master
