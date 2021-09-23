@@ -100,7 +100,7 @@ def print_global_server_config(_f, _use_ssl: bool) -> None:
 
     _f.write("	location / {\n")
     _f.write("		proxy_http_version 1.1;\n")
-    _f.write("		proxy_pass  http://127.0.0.1:5000/;\n")
+    _f.write("		proxy_pass  http://proxy-ui:5000/;\n")
     _f.write("		proxy_set_header Upgrade $http_upgrade;\n")
     _f.write("		proxy_set_header Connection 'upgrade';\n")
     _f.write("		proxy_set_header Host $host;\n")
