@@ -100,7 +100,7 @@ def print_global_server_config(_f, _use_ssl: bool) -> None:
     if _use_ssl:
         _f.write("	listen 443 ssl;\n")
         _f.write("	ssl_certificate " + CERT_FILE + ";\n")
-        _f.write("  ssl_certificate_key " + KEY_FILE + ";\n")
+        _f.write("	ssl_certificate_key " + KEY_FILE + ";\n")
         _f.write("	ssl_verify_client off;\n")
     else:
         _f.write("	listen 80;\n")
@@ -117,12 +117,36 @@ def print_group_definition(_chain_info: ChainInfo, _f) -> None:
     _f.write("}\n")
 
 
+def print_ws_group_definition(_chain_info: ChainInfo, _f) -> None:
+    _f.write("upstream ws-" + _chain_info.chain_name + " {\n")
+    _f.write("   ip_hash;\n")
+    for endpoint in _chain_info.list_of_ws_endpoints:
+        _f.write("   server " + endpoint[5:] + " max_fails=1 fail_timeout=600s;\n")
+    _f.write("}\n")
+
+
 def print_storage_group_definition(_chain_info: ChainInfo, _f) -> None:
     _f.write("upstream storage-" + _chain_info.chain_name + " {\n")
     _f.write("   ip_hash;\n")
     for domain in _chain_info.list_of_domains:
         _f.write("   server " + domain + " max_fails=1 fail_timeout=600s;\n")
     _f.write("}\n")
+
+
+def print_loadbalacing_config_for_chain(_chain_info: ChainInfo, _f) -> None:
+    _f.write("	location /"+_chain_info.network + "/" + _chain_info.chain_name + " {\n")
+    _f.write("	      proxy_http_version 1.1;\n")
+    _f.write("	      proxy_pass http://" + _chain_info.chain_name + "/;\n")
+    _f.write("	    }\n")
+
+
+def print_ws_config_for_chain(_chain_info: ChainInfo, _f) -> None:
+    _f.write("	location /"+_chain_info.network + "/ws/" + _chain_info.chain_name + " {\n")
+    _f.write("	      proxy_http_version 1.1;\n")
+    _f.write("	      proxy_set_header Upgrade $http_upgrade;\n")
+    _f.write("	      proxy_set_header Connection \"upgrade\";\n")
+    _f.write("	      proxy_pass http://ws-" + _chain_info.chain_name + "/;\n")
+    _f.write("	    }\n")
 
 
 def print_storage_proxy_for_chain(_chain_info: ChainInfo, _f) -> None:
@@ -133,28 +157,24 @@ def print_storage_proxy_for_chain(_chain_info: ChainInfo, _f) -> None:
     _f.write("	    }\n")
 
 
-def print_loadbalacing_config_for_chain(_chain_info: ChainInfo, _f) -> None:
-    _f.write("	location /"+_chain_info.network + "/" + _chain_info.chain_name + " {\n")
-    _f.write("	      proxy_http_version 1.1;\n")
-    _f.write("	      proxy_pass http://" + _chain_info.chain_name + "/;\n")
-    _f.write("	    }\n")
-
-
 def print_config_file(_chain_infos: list) -> None:
     if os.path.exists(TMP_CONFIG_FILE):
         os.remove(TMP_CONFIG_FILE)
     with open(TMP_CONFIG_FILE, 'w') as f:
         for chain_info in _chain_infos:
             print_group_definition(chain_info, f)
+            print_ws_group_definition(chain_info, f)
             print_storage_group_definition(chain_info, f)
         print_global_server_config(f, False)
         for chain_info in _chain_infos:
             print_loadbalacing_config_for_chain(chain_info, f)
+            print_ws_config_for_chain(chain_info, f)
             print_storage_proxy_for_chain(chain_info, f)
         f.write("}\n")
         print_global_server_config(f, True)
         for chain_info in _chain_infos:
             print_loadbalacing_config_for_chain(chain_info, f)
+            print_ws_config_for_chain(chain_info, f)
             print_storage_proxy_for_chain(chain_info, f)
         f.write("}\n")
         f.close()
