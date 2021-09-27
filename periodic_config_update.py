@@ -104,9 +104,18 @@ def print_global_server_config(_f, _use_ssl: bool) -> None:
         _f.write("	ssl_verify_client off;\n")
     else:
         _f.write("	listen 80;\n")
-    _f.write("	root /usr/share/nginx/www;\n")
-    _f.write("	index index.php index.html index.htm;\n")
+    # _f.write("	root /usr/share/nginx/www;\n")
+    # _f.write("	index index.php index.html index.htm;\n")
     _f.write("	server_name " + PROXY_FULL_HOST_NAME + ";\n")
+
+    _f.write("	location / {\n")
+    _f.write("		proxy_http_version 1.1;\n")
+    _f.write("		proxy_pass  http://proxy-ui:5000/;\n")
+    _f.write("		proxy_set_header Upgrade $http_upgrade;\n")
+    _f.write("		proxy_set_header Connection 'upgrade';\n")
+    _f.write("		proxy_set_header Host $host;\n")
+    _f.write("		proxy_cache_bypass $http_upgrade;\n")
+    _f.write("	}\n")
 
 
 def print_group_definition(_chain_info: ChainInfo, _f) -> None:
@@ -134,14 +143,14 @@ def print_storage_group_definition(_chain_info: ChainInfo, _f) -> None:
 
 
 def print_loadbalacing_config_for_chain(_chain_info: ChainInfo, _f) -> None:
-    _f.write("	location /"+_chain_info.network + "/" + _chain_info.chain_name + " {\n")
+    _f.write("	location /v1/" + _chain_info.chain_name + " {\n")
     _f.write("	      proxy_http_version 1.1;\n")
     _f.write("	      proxy_pass http://" + _chain_info.chain_name + "/;\n")
     _f.write("	    }\n")
 
 
 def print_ws_config_for_chain(_chain_info: ChainInfo, _f) -> None:
-    _f.write("	location /"+_chain_info.network + "/ws/" + _chain_info.chain_name + " {\n")
+    _f.write("	location /v1/ws/" + _chain_info.chain_name + " {\n")
     _f.write("	      proxy_http_version 1.1;\n")
     _f.write("	      proxy_set_header Upgrade $http_upgrade;\n")
     _f.write("	      proxy_set_header Connection \"upgrade\";\n")
@@ -194,10 +203,10 @@ def main():
         print("Updating chain info ...")
         subprocess.check_call(["/bin/bash", "-c", "rm -f /tmp/*"])
         subprocess.check_call(["/bin/bash", "-c",
-                              "cp /etc/" + ABI_FILENAME + " /tmp/abi.json"])
+                              "cp /etc/abi.json /tmp/abi.json"])
         subprocess.check_call(["python3", "/etc/endpoints.py"])
         subprocess.check_call(["/bin/bash", "-c", "mkdir -p /usr/share/nginx/www"])
-        subprocess.check_call(["/bin/bash", "-c", "cp -f /tmp/chains.json /usr/share/nginx/www/api.json"])
+        subprocess.check_call(["/bin/bash", "-c", "cp -f /tmp/chains.json /usr/share/nginx/www/chains.json"])
         subprocess.check_call(["/bin/bash", "-c", "cp -f /etc/VERSION /usr/share/nginx/www/VERSION.txt"])
 
         if not os.path.exists(RESULTS_PATH):

@@ -1,12 +1,22 @@
 version: '3'
 services:
+  proxy-ui:
+    image: proxy-ui:latest
+    build:
+      context: ./proxy-ui
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
   skale-proxy:
     environment:
-      - PROXY_FULL_HOST_NAME=api.skalenodes.com
-      - ETH_ENDPOINT=https://mainnet.infura.io/v3/XYZ
-      - ENDPOINT_PREFIX=mainnet
-      - ABI_FILENAME=skale-manager-1.8.0-mainnet-abi.json
-    image: skalenetwork/skale-proxy:develop-latest
+      PROXY_FULL_HOST_NAME: ${PROXY_FULL_HOST_NAME}
+      ETH_ENDPOINT: ${ENDPOINT}
+      ENDPOINT_PREFIX: mainnet
+      ABI_FILENAME: abi.json
+    image: skale-proxy:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "80:80"
       - "443:443"

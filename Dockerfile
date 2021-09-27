@@ -24,6 +24,8 @@ RUN echo "daemon off;" >> /etc/nginx/nginx.conf
 ADD sample/nginx-site.conf /etc/nginx/sites-available/default
 COPY abi /etc/
 
+RUN pip3 install web3==5.13.1
+
 ADD ./endpoints.py /etc/endpoints.py
 ADD ./periodic_config_update.py /etc/periodic_config_update.py
 ADD ./VERSION /etc/VERSION
