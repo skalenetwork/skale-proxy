@@ -54,6 +54,8 @@ def parse_chains(_network: str, _path: str) -> list:
 
         list_of_http_endpoints = list()
         list_of_https_endpoints = list()
+        list_of_ws_endpoints = list()
+        list_of_wss_endpoints = list()
         list_of_domains = list()
 
         for node in nodes:
@@ -63,20 +65,28 @@ def parse_chains(_network: str, _path: str) -> list:
             endpoint_https = node["https_endpoint_domain"]
             print(endpoint_https)
             list_of_https_endpoints.append(endpoint_https)
+            endpoint_ws = node["ws_endpoint_domain"]
+            endpoint_wss = node["wss_endpoint_domain"]
+            list_of_ws_endpoints.append(endpoint_ws)
+            list_of_wss_endpoints.append(endpoint_wss)
             list_of_domains.append(node['domain'])
 
-        chain_infos.append(ChainInfo(_network, name, list_of_http_endpoints, list_of_https_endpoints, list_of_domains))
-
+        chain_infos.append(ChainInfo(_network, name, list_of_http_endpoints,
+                                     list_of_https_endpoints, list_of_ws_endpoints,
+                                     list_of_wss_endpoints, list_of_domains))
     return chain_infos
 
 
 class ChainInfo:
     def __init__(self, _network: str, _chain_name: str, _list_of_http_endpoints: list,
-                 _list_of_https_endpoints: list, _list_of_domains: list):
+                 _list_of_https_endpoints: list, _list_of_ws_endpoints: list,
+                 _list_of_wss_endpoints: list, _list_of_domains: list):
         self.network = _network
         self.chain_name = _chain_name
         self.list_of_http_endpoints = _list_of_http_endpoints
         self.list_of_https_endpoints = _list_of_https_endpoints
+        self.list_of_ws_endpoints = _list_of_ws_endpoints
+        self.list_of_wss_endpoints = _list_of_wss_endpoints
         self.list_of_domains = _list_of_domains
 
 
