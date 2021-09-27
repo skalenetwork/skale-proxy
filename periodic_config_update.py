@@ -150,7 +150,7 @@ def print_loadbalacing_config_for_chain(_chain_info: ChainInfo, _f) -> None:
 
 
 def print_ws_config_for_chain(_chain_info: ChainInfo, _f) -> None:
-    _f.write("	location /"+_chain_info.network + "/ws/" + _chain_info.chain_name + " {\n")
+    _f.write("	location /v1/ws/" + _chain_info.chain_name + " {\n")
     _f.write("	      proxy_http_version 1.1;\n")
     _f.write("	      proxy_set_header Upgrade $http_upgrade;\n")
     _f.write("	      proxy_set_header Connection \"upgrade\";\n")
