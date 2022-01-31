@@ -17,30 +17,6 @@
 #   You should have received a copy of the GNU Affero General Public License
 #   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import logging
-from time import sleep
 
-from proxy.nginx import generate_nginx_configs
-from proxy.endpoints import endpoints_for_all_schains
-from proxy.helper import write_json
-from proxy.config import CHAINS_INFO_FILEPATH, MONITOR_INTERVAL, ENDPOINT, SM_ABI_FILEPATH
-
-
-logger = logging.getLogger(__name__)
-
-
-def main():
-    logger.info('Starting SKALE Proxy server')
-    while True:
-        logger.info('Collecting endpoints list')
-        endpoints = endpoints_for_all_schains(ENDPOINT, SM_ABI_FILEPATH)
-        write_json(CHAINS_INFO_FILEPATH, endpoints)
-
-        generate_nginx_configs(endpoints)
-
-        logger.info(f'Proxy iteration done, sleeping for {MONITOR_INTERVAL}')
-        sleep(MONITOR_INTERVAL)
-
-
-if __name__ == '__main__':
-    main()
+def generate_nginx_configs(endpoints: list) -> None:
+    pass

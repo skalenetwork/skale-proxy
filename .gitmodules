@@ -2,3 +2,7 @@
 	path = proxy-ui
 	url = https://github.com/skalenetwork/proxy-ui.git
 	branch = master
+[submodule "helper-scripts"]
+	path = helper-scripts
+	url = https://github.com/skalenetwork/helper-scripts.git
+	branch = develop

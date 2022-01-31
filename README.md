@@ -2,8 +2,8 @@
 
 [![Discord](https://img.shields.io/discord/534485763354787851.svg)](https://discord.gg/vvUtWJB)
 
-skale-proxy is a public service that provides proxied and load-balanced JSON-RPC endpoints for SKALE chains 
-
+SKALE Proxy is high performance, easy-to-run public service that provides proxied and load-balanced 
+JSON-RPC endpoints for SKALE chains. It is based on NGINX.
 
 ## Usage guide
 
