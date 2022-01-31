@@ -1,10 +1,16 @@
-# skale-proxy
+# SKALE Proxy
+
+[![Discord](https://img.shields.io/discord/534485763354787851.svg)](https://discord.gg/vvUtWJB)
 
 skale-proxy is a public service that provides proxied and load-balanced JSON-RPC endpoints for SKALE chains 
 
 
-# running
+## Usage guide
 
+### Prerequisites
+
+- Docker
+- docker-compose
 
 1. Place you ABI json file into abi directory
 
@@ -26,7 +32,10 @@ skale-proxy is a public service that provides proxied and load-balanced JSON-RPC
 
  Voila!
 
-# local development
+## License
 
-Set `FULL_PROXY_DOMAIN_NAME` to localhost and run `cert_gen.sh`. This will generate a self-signed cert in the `data/` directory.
+[![License](https://img.shields.io/github/license/skalenetwork/skale-admin.svg)](LICENSE)
 
+All contributions to SKALE Admin are made under the [GNU Affero General Public License v3](https://www.gnu.org/licenses/agpl-3.0.en.html). See [LICENSE](LICENSE).
+
+Copyright (C) 2022-Present SKALE Labs.
