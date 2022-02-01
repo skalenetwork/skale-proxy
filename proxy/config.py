@@ -19,14 +19,28 @@
 
 import os
 
+DIR_PATH = os.path.dirname(os.path.realpath(__file__))
+PROJECT_PATH = os.path.join(DIR_PATH, os.pardir)
+
 ENDPOINT = os.environ['ETH_ENDPOINT']
 PORTS_PER_SCHAIN = 64
 
 MONITOR_INTERVAL = os.getenv('MONITOR_INTERVAL', 60 * 60 * 2)
 
-NGINX_WWW_FOLDER = '/www'
+NGINX_WWW_FOLDER = os.path.join(PROJECT_PATH, 'www')
 CHAINS_INFO_FILEPATH = os.path.join(NGINX_WWW_FOLDER, 'chains.json')
 
-DATA_FOLDER = '/data'
+DATA_FOLDER = os.path.join(PROJECT_PATH, 'data')
+
 SM_ABI_DEFAULT_FILEPATH = os.path.join(DATA_FOLDER, 'abi.json')
 SM_ABI_FILEPATH = os.getenv('SM_ABI_FILEPATH', SM_ABI_DEFAULT_FILEPATH)
+
+TEMPLATES_FOLDER = os.path.join(PROJECT_PATH, 'templates')
+SCHAIN_NGINX_TEMPLATE = os.path.join(TEMPLATES_FOLDER, 'chain.conf.j2')
+
+SITES_AVAILABLE_FOLDER = os.path.join(PROJECT_PATH, 'sites-available')
+
+SERVER_NAME = os.environ['SERVER_NAME']
+
+PROXY_LOG_FORMAT = '[%(asctime)s] %(process)d %(levelname)s %(module)s: %(message)s'
+LONG_LINE = '=' * 100

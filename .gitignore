@@ -8,3 +8,5 @@ __pycache__
 
 abi.json
 chains.json
+
+sites-available/*.conf

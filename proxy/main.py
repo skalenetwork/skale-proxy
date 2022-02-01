@@ -21,24 +21,29 @@ import logging
 from time import sleep
 
 from proxy.nginx import generate_nginx_configs
-from proxy.endpoints import endpoints_for_all_schains
-from proxy.helper import write_json
-from proxy.config import CHAINS_INFO_FILEPATH, MONITOR_INTERVAL, ENDPOINT, SM_ABI_FILEPATH
+from proxy.endpoints import generate_endpoints
+from proxy.helper import init_default_logger, write_json
+from proxy.str_formatters import arguments_list_string
+from proxy.config import (
+    CHAINS_INFO_FILEPATH, MONITOR_INTERVAL, ENDPOINT, SM_ABI_FILEPATH, SERVER_NAME
+)
 
 
 logger = logging.getLogger(__name__)
 
 
 def main():
-    logger.info('Starting SKALE Proxy server')
+    init_default_logger()
+    logger.info(arguments_list_string({
+        'Endpoint': ENDPOINT,
+        'Server name': SERVER_NAME
+        }, 'Starting SKALE Proxy server'))
     while True:
         logger.info('Collecting endpoints list')
-        endpoints = endpoints_for_all_schains(ENDPOINT, SM_ABI_FILEPATH)
-        write_json(CHAINS_INFO_FILEPATH, endpoints)
-
-        generate_nginx_configs(endpoints)
-
-        logger.info(f'Proxy iteration done, sleeping for {MONITOR_INTERVAL}')
+        schains_endpoints = generate_endpoints(ENDPOINT, SM_ABI_FILEPATH)
+        write_json(CHAINS_INFO_FILEPATH, schains_endpoints)
+        generate_nginx_configs(schains_endpoints)
+        logger.info(f'Proxy iteration done, sleeping for {MONITOR_INTERVAL}s...')
         sleep(MONITOR_INTERVAL)
 
 

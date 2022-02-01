@@ -17,10 +17,15 @@
 #   You should have received a copy of the GNU Affero General Public License
 #   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
+import sys
 import json
 import socket
+import logging
+from logging import Formatter, StreamHandler
 
+from jinja2 import Environment
+
+from proxy.config import PROXY_LOG_FORMAT
 
 
 def read_json(path, mode='r'):
@@ -35,3 +40,29 @@ def write_json(path, content):
 
 def ip_from_bytes(bytes):
     return socket.inet_ntoa(bytes)
+
+
+def process_template(source, destination, data):
+    """
+    :param source: j2 template source path
+    :param destination: out file path
+    :param data: dictionary with fields for template
+    :return: Nothing
+    """
+    template = None
+    with open(source) as template_file:
+        template = template_file.read()
+    processed_template = Environment().from_string(template).render(data)
+    with open(destination, "w") as f:
+        f.write(processed_template)
+
+
+def init_default_logger():
+    handlers = []
+    formatter = Formatter(PROXY_LOG_FORMAT)
+    stream_handler = StreamHandler(sys.stderr)
+    stream_handler.setFormatter(formatter)
+    stream_handler.setLevel(logging.INFO)
+    handlers.append(stream_handler)
+
+    logging.basicConfig(level=logging.DEBUG, handlers=handlers)

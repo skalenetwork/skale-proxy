@@ -9,14 +9,16 @@ services:
   #     - "5000:5000"
   skale-proxy:
     environment:
+      SERVER_NAME: ${SERVER_NAME}
       ETH_ENDPOINT: ${ETH_ENDPOINT}
     image: skale-proxy:latest
     build:
       context: .
       dockerfile: Dockerfile
     volumes:
-      -  ./data:/data
-      -  ./www:/www
+      -  ./data:/usr/src/proxy/data
+      -  ./www:/usr/src/proxy/www
+      - ./sites-available:/usr/src/proxy/sites-available
     logging:
       driver: json-file
       options:
@@ -30,5 +32,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
+      -  ./data:/data
       - ./www:/usr/share/nginx/www/files
       - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./sites-available:/etc/nginx/sites-available/
