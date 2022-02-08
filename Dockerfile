@@ -1,4 +1,4 @@
-FROM ubuntu:20.10
+FROM ubuntu:20.04
 
 # Keep upstart from complaining
 RUN dpkg-divert --local --rename --add /sbin/initctl
