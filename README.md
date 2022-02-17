@@ -12,6 +12,16 @@ JSON-RPC endpoints for SKALE chains. It is based on NGINX.
 - Docker
 - docker-compose
 
+
+### Repo setup
+
+1. Clone all submodules  
+2. Put `abi.json` file in `data` folder  
+3. Put `server.crt` and `server.key` files in `data` folder
+4. Configure proxy-ui environement params
+5. Export `ENDPOINT` environement param
+5. Run ` docker-compose up --build`
+
 1. Place you ABI json file into abi directory
 
 2. Set 'ABI_FILENAME directory' in docker-compose.yml to the name of the ABI file.

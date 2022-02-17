@@ -1,12 +1,16 @@
 version: '3'
 services:
-  # proxy-ui:
-  #   image: proxy-ui:latest
-  #   build:
-  #     context: ./proxy-ui
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "5000:5000"
+  proxy-ui:
+    image: proxy-ui:latest
+    build:
+      context: ./proxy-ui
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_NETWORKS: "{}"
+    ports:
+      - "5001:5001"
+    environment:
+      REACT_APP_NETWORKS: "{}"
   skale-proxy:
     environment:
       SERVER_NAME: ${SERVER_NAME}
@@ -18,7 +22,7 @@ services:
     volumes:
       -  ./data:/usr/src/proxy/data
       -  ./www:/usr/src/proxy/www
-      - ./sites-available:/usr/src/proxy/sites-available
+      - ./conf:/usr/src/proxy/conf/
     logging:
       driver: json-file
       options:
@@ -35,4 +39,4 @@ services:
       -  ./data:/data
       - ./www:/usr/share/nginx/www/files
       - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./sites-available:/etc/nginx/sites-available/
+      - ./conf:/etc/nginx/conf/

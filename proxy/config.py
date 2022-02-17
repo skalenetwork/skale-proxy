@@ -36,9 +36,12 @@ SM_ABI_DEFAULT_FILEPATH = os.path.join(DATA_FOLDER, 'abi.json')
 SM_ABI_FILEPATH = os.getenv('SM_ABI_FILEPATH', SM_ABI_DEFAULT_FILEPATH)
 
 TEMPLATES_FOLDER = os.path.join(PROJECT_PATH, 'templates')
-SCHAIN_NGINX_TEMPLATE = os.path.join(TEMPLATES_FOLDER, 'chain.conf.j2')
 
-SITES_AVAILABLE_FOLDER = os.path.join(PROJECT_PATH, 'sites-available')
+SCHAIN_NGINX_TEMPLATE = os.path.join(TEMPLATES_FOLDER, 'chain.conf.j2')
+UPSTREAM_NGINX_TEMPLATE = os.path.join(TEMPLATES_FOLDER, 'upstream.conf.j2')
+
+CHAINS_FOLDER = os.path.join(PROJECT_PATH, 'conf', 'chains')
+UPSTREAMS_FOLDER = os.path.join(PROJECT_PATH, 'conf', 'upstreams')
 
 SERVER_NAME = os.environ['SERVER_NAME']
 

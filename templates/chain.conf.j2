@@ -1,63 +1,15 @@
-server {
-	listen 80;
-	server_name {{ server_name }};
-
-    location /v1/{{ schain_name }} {
-	      proxy_http_version 1.1;
-	      proxy_pass http://{{ schain_name }}/;
-	    }
-	location /v1/ws/{{ schain_name }} {
-	      proxy_http_version 1.1;
-	      proxy_set_header Upgrade $http_upgrade;
-	      proxy_set_header Connection "upgrade";
-	      proxy_pass http://ws-{{ schain_name }}/;
-	    }
-	location /fs/{{ schain_name }} {
-	      rewrite /fs/{{ schain_name }}/(.*) /{{ schain_name }}/$1 break;
-	      proxy_http_version 1.1;
-	      proxy_pass http://storage-{{ schain_name }}/;
-	    }
-}
-
-server {
-	listen 443 ssl;
-    server_name {{ server_name }};
-	ssl_certificate /data/server.crt;
-	ssl_certificate_key /data/server.key;
-	ssl_verify_client off;
-
-	location /v1/{{ schain_name }} {
+location /v1/{{ schain_name }} {
         proxy_http_version 1.1;
         proxy_pass http://{{ schain_name }}/;
     }
-	location /v1/ws/{{ schain_name }} {
+location /v1/ws/{{ schain_name }} {
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
         proxy_pass http://ws-{{ schain_name }}/;
     }
-	location /fs/{{ schain_name }} {
+location /fs/{{ schain_name }} {
         rewrite /fs/{{ schain_name }}/(.*) /{{ schain_name }}/$1 break;
         proxy_http_version 1.1;
         proxy_pass http://storage-{{ schain_name }}/;
     }
-}
-
-upstream {{ schain_name }} {
-    ip_hash;
-    {% for endpoint in http_endpoints %}
-    server {{ endpoint }} max_fails=1 fail_timeout=600s;
-    {% endfor %}
-}
-upstream ws-{{ schain_name }} {
-    ip_hash;
-    {% for endpoint in ws_endpoints %}
-    server {{ endpoint }} max_fails=1 fail_timeout=600s;
-    {% endfor %}
-}
-upstream storage-{{ schain_name }} {
-    ip_hash;
-    {% for endpoint in fs_endpoints %}
-    server {{ endpoint }} max_fails=1 fail_timeout=600s;
-    {% endfor %}
-}

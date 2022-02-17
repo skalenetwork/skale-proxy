@@ -9,4 +9,5 @@ __pycache__
 abi.json
 chains.json
 
-sites-available/*.conf
+conf/upstreams/*.conf
+conf/chains/*.conf

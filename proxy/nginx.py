@@ -21,7 +21,9 @@ import os
 import logging
 
 from proxy.helper import process_template
-from proxy.config import SCHAIN_NGINX_TEMPLATE, SITES_AVAILABLE_FOLDER, SERVER_NAME
+from proxy.config import (
+    SCHAIN_NGINX_TEMPLATE, UPSTREAM_NGINX_TEMPLATE, CHAINS_FOLDER, UPSTREAMS_FOLDER, SERVER_NAME
+)
 
 
 logger = logging.getLogger(__name__)
@@ -35,9 +37,11 @@ def generate_nginx_configs(schains_endpoints: list) -> None:
 
 
 def process_nginx_config_template(chain_info: dict, server_name: str) -> None:
-    dest = os.path.join(SITES_AVAILABLE_FOLDER, f'{chain_info["schain_name"]}.conf')
+    chain_dest = os.path.join(CHAINS_FOLDER, f'{chain_info["schain_name"]}.conf')
+    upstream_dest = os.path.join(UPSTREAMS_FOLDER, f'{chain_info["schain_name"]}.conf')
     chain_info['server_name'] = server_name
-    process_template(SCHAIN_NGINX_TEMPLATE, dest, chain_info)
+    process_template(SCHAIN_NGINX_TEMPLATE, chain_dest, chain_info)
+    process_template(UPSTREAM_NGINX_TEMPLATE, upstream_dest, chain_info)
 
 
 if __name__ == '__main__':
