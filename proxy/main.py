@@ -20,7 +20,7 @@
 import logging
 from time import sleep
 
-from proxy.nginx import generate_nginx_configs
+from proxy.nginx import update_nginx_configs
 from proxy.endpoints import generate_endpoints
 from proxy.helper import init_default_logger, write_json
 from proxy.str_formatters import arguments_list_string
@@ -42,7 +42,7 @@ def main():
         logger.info('Collecting endpoints list')
         schains_endpoints = generate_endpoints(ENDPOINT, SM_ABI_FILEPATH)
         write_json(CHAINS_INFO_FILEPATH, schains_endpoints)
-        generate_nginx_configs(schains_endpoints)
+        update_nginx_configs(schains_endpoints)
         logger.info(f'Proxy iteration done, sleeping for {MONITOR_INTERVAL}s...')
         sleep(MONITOR_INTERVAL)
 

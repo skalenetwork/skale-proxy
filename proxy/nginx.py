@@ -20,13 +20,30 @@
 import os
 import logging
 
+import docker
+
 from proxy.helper import process_template
 from proxy.config import (
-    SCHAIN_NGINX_TEMPLATE, UPSTREAM_NGINX_TEMPLATE, CHAINS_FOLDER, UPSTREAMS_FOLDER, SERVER_NAME
+    SCHAIN_NGINX_TEMPLATE, UPSTREAM_NGINX_TEMPLATE, CHAINS_FOLDER, UPSTREAMS_FOLDER, SERVER_NAME,
+    NGINX_CONTAINER_NAME
 )
 
 
 logger = logging.getLogger(__name__)
+docker_client = docker.DockerClient()
+
+
+def update_nginx_configs(schains_endpoints: list) -> None:
+    generate_nginx_configs(schains_endpoints)
+    restart_nginx_container()
+
+
+def restart_nginx_container(d_client=None):
+    logger.info('Going to restart nginx container')
+    d_client = d_client or docker_client
+    nginx_container = d_client.containers.get(NGINX_CONTAINER_NAME)
+    nginx_container.restart()
+    logger.info('Successfully restarted nginx container')
 
 
 def generate_nginx_configs(schains_endpoints: list) -> None:

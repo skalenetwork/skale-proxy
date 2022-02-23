@@ -47,3 +47,5 @@ SERVER_NAME = os.environ['SERVER_NAME']
 
 PROXY_LOG_FORMAT = '[%(asctime)s] %(process)d %(levelname)s %(module)s: %(message)s'
 LONG_LINE = '=' * 100
+
+NGINX_CONTAINER_NAME = 'proxy_nginx'

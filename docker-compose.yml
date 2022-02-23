@@ -2,20 +2,18 @@ version: '3'
 services:
   proxy-ui:
     image: proxy-ui:latest
+    container_name: proxy_ui
     build:
       context: ./proxy-ui
       dockerfile: Dockerfile
-      args:
-        REACT_APP_NETWORKS: "{}"
     ports:
       - "5001:5001"
-    environment:
-      REACT_APP_NETWORKS: "{}"
   skale-proxy:
     environment:
       SERVER_NAME: ${SERVER_NAME}
       ETH_ENDPOINT: ${ETH_ENDPOINT}
     image: skale-proxy:latest
+    container_name: proxy_admin
     build:
       context: .
       dockerfile: Dockerfile
@@ -23,6 +21,7 @@ services:
       -  ./data:/usr/src/proxy/data
       -  ./www:/usr/src/proxy/www
       - ./conf:/usr/src/proxy/conf/
+      - /var/run/docker.sock:/var/run/docker.sock
     logging:
       driver: json-file
       options:
@@ -31,7 +30,7 @@ services:
     restart: unless-stopped
   nginx:
     image: nginx:1.20.2
-    container_name: skale_nginx
+    container_name: proxy_nginx
     ports:
       - "80:80"
       - "443:443"
