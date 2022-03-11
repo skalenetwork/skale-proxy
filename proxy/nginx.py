@@ -42,8 +42,11 @@ def restart_nginx_container(d_client=None):
     logger.info('Going to restart nginx container')
     d_client = d_client or docker_client
     nginx_container = d_client.containers.get(NGINX_CONTAINER_NAME)
-    nginx_container.restart()
-    logger.info('Successfully restarted nginx container')
+    res = nginx_container.exec_run(cmd='nginx -s reload')
+    if res != 0:
+        logger.warning('Could not reload nginx configuration, check out nginx logs')
+    else:
+        logger.info('Successfully reloaded nginx service')
 
 
 def generate_nginx_configs(schains_endpoints: list) -> None:
@@ -62,11 +65,5 @@ def process_nginx_config_template(chain_info: dict, server_name: str) -> None:
 
 
 if __name__ == '__main__':
-    chain_data = {'schain_name': 'test'}
-    process_nginx_config_template({
-        'server_name': 'test.com',
-        'schain_name': 'test',
-        'http_endpoints': ['ssss.com:15555', 'aaaa', 'bbbbb'],
-        'ws_endpoints': ['fgdfgdf', 'dsgfs', 'asaffd'],
-        'fs_endpoints': ['bvf', 'g', 'hh'],
-    })
+    res = generate_nginx_configs([])
+    print(res)

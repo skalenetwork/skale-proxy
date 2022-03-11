@@ -20,6 +20,8 @@
 import json
 import logging
 
+import requests
+
 from web3 import Web3, HTTPProvider
 from Crypto.Hash import keccak
 
@@ -46,24 +48,18 @@ class ChainInfo:
         self.schain_name = schain_name
         self.chain_id = schain_name_to_network_id(schain_name)
         self.http_endpoints = []
-        # self.http_endpoints_ip, self.https_endpoints = [], []
         self.ws_endpoints = []
-        # self.ws_endpoints_ip, self.wss_endpoints = [], []
         self.fs_endpoints = []
         self._format_nodes(nodes)
 
     def _format_nodes(self, nodes):
         for node in nodes:
-            self.http_endpoints.append(
-                node['http_endpoint_domain'].removeprefix(URL_PREFIXES['http'])
-            )
-            #self.http_endpoints_ip.append(node['http_endpoint_ip'].removeprefix(URL_PREFIXES['http']))
-            #self.https_endpoints.append(node['https_endpoint_domain'].removeprefix(URL_PREFIXES['https']))
-
+            http_endpoint = node['http_endpoint_domain']
+            if not url_ok(http_endpoint):
+                logger.warning(f'{http_endpoint} is not accesible, removing from the list')
+                continue
+            self.http_endpoints.append(http_endpoint.removeprefix(URL_PREFIXES['http']))
             self.ws_endpoints.append(node['ws_endpoint_domain'].removeprefix(URL_PREFIXES['ws']))
-            #self.ws_endpoints_ip.append(node['ws_endpoint_ip'].removeprefix(URL_PREFIXES['ws']))
-            #self.wss_endpoints.append(node['wss_endpoint_domain'].removeprefix(URL_PREFIXES['wss']))
-
             self.fs_endpoints.append(node['domain'])
 
     def to_dict(self):
@@ -71,13 +67,17 @@ class ChainInfo:
             'schain_name': self.schain_name,
             'chain_id': self.chain_id,
             'http_endpoints': self.http_endpoints,
-            # 'http_endpoints_ip': self.http_endpoints_ip,
-            # 'https_endpoints': self.https_endpoints,
             'ws_endpoints': self.ws_endpoints,
-            # 'ws_endpoints_ip': self.ws_endpoints_ip,
-            # 'wss_endpoints': self.wss_endpoints,
             'fs_endpoints': self.fs_endpoints
         }
+
+
+def url_ok(url) -> bool:
+    try:
+        r = requests.head(url)
+        return bool(r.status_code)
+    except requests.exceptions.ConnectionError:
+        return False
 
 
 def schain_name_to_id(name: str) -> str:

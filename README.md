@@ -12,40 +12,28 @@ JSON-RPC endpoints for SKALE chains. It is based on NGINX.
 - Docker
 - docker-compose
 
-
 ### Repo setup
 
-1. Clone all submodules  
-2. Put `abi.json` file in `data` folder  
-3. Put `server.crt` and `server.key` files in `data` folder
-4. Configure proxy-ui environement params
-5. Export `ENDPOINT` environement param
-5. Run ` docker-compose up --build`
+1. Clone repo & all submodules  
+2. Put `abi.json`, `server.crt` and `server.key`files in `data` folder  
+3. Export all required environement variables (see below)
+4. Run `scripts/run_proxy.sh`
 
-1. Place you ABI json file into abi directory
+#### Required environement variables
 
-2. Set 'ABI_FILENAME directory' in docker-compose.yml to the name of the ABI file.
-      
-3. Set 'PROXY_FULL_HOST_NAME' in docker-compose.yml to the domain name of your proxy.
-
-4. Set 'ENDPOINT_PREFIX' in 'docker-compose.yml' to the endpoint prefix (must be non-empty!)
-
-5. Set 'ETH_ENDPOINT' in docker-compose to your ETH main net endpoint.
-
-6. Create 'data' directory and copy 'server.crt' and 'server.key' to it. 
-   The certificate need to be issued to 'PROXY_FULL_HOST_NAME'.
-
-  
-7. Run 'docker-compose pull && docker-compose up'  andf wait around a minute until skale-proxy reads schain info from blockchain and starts.
-
-8.  Try 'http://PROXY_FULL_HOST_NAME/api.json' . You should be able to see API descriptions. 
-
- Voila!
+- `NETWORKS`
+- `DOCS_WEBSITE_URL`
+- `MAIN_WEBSITE_URL`
+- `NETWORK_NAME`
+- `CHAIN_ID`
+- `EXPLORER_URL`
+- `BASE_PROXY_URL`
+- `ETH_ENDPOINT`
 
 ## License
 
-[![License](https://img.shields.io/github/license/skalenetwork/skale-admin.svg)](LICENSE)
+[![License](https://img.shields.io/github/license/skalenetwork/skale-proxy.svg)](LICENSE)
 
-All contributions to SKALE Admin are made under the [GNU Affero General Public License v3](https://www.gnu.org/licenses/agpl-3.0.en.html). See [LICENSE](LICENSE).
+All contributions to SKALE Proxy are made under the [GNU Affero General Public License v3](https://www.gnu.org/licenses/agpl-3.0.en.html). See [LICENSE](LICENSE).
 
 Copyright (C) 2022-Present SKALE Labs.

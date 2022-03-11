@@ -18,8 +18,8 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      -  ./data:/usr/src/proxy/data
-      -  ./www:/usr/src/proxy/www
+      - ./data:/usr/src/proxy/data
+      - ./www:/usr/src/proxy/www
       - ./conf:/usr/src/proxy/conf/
       - /var/run/docker.sock:/var/run/docker.sock
     logging:
