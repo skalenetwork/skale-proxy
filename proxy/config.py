@@ -43,6 +43,9 @@ UPSTREAM_NGINX_TEMPLATE = os.path.join(TEMPLATES_FOLDER, 'upstream.conf.j2')
 CHAINS_FOLDER = os.path.join(PROJECT_PATH, 'conf', 'chains')
 UPSTREAMS_FOLDER = os.path.join(PROJECT_PATH, 'conf', 'upstreams')
 
+TMP_CHAINS_FOLDER = os.path.join(PROJECT_PATH, 'conf', 'tmp_chains')
+TMP_UPSTREAMS_FOLDER = os.path.join(PROJECT_PATH, 'conf', 'tmp_upstreams')
+
 SERVER_NAME = os.environ['SERVER_NAME']
 
 PROXY_LOG_FORMAT = '[%(asctime)s] %(process)d %(levelname)s %(module)s: %(message)s'

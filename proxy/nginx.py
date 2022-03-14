@@ -18,14 +18,16 @@
 #   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
+import shutil
 import logging
+from pathlib import Path
 
 import docker
 
 from proxy.helper import process_template
 from proxy.config import (
     SCHAIN_NGINX_TEMPLATE, UPSTREAM_NGINX_TEMPLATE, CHAINS_FOLDER, UPSTREAMS_FOLDER, SERVER_NAME,
-    NGINX_CONTAINER_NAME, CONTAINER_RUNNING_STATUS
+    NGINX_CONTAINER_NAME, CONTAINER_RUNNING_STATUS, TMP_CHAINS_FOLDER, TMP_UPSTREAMS_FOLDER
 )
 
 
@@ -35,7 +37,20 @@ docker_client = docker.DockerClient()
 
 def update_nginx_configs(schains_endpoints: list) -> None:
     generate_nginx_configs(schains_endpoints)
+    move_nginx_configs()
     monitor_nginx_container()
+
+
+def move_nginx_configs():
+    """Moves nginx configs from the temporary directories to the main folders"""
+    logger.info('Moving nginx configs from temporary directories...')
+    shutil.rmtree(CHAINS_FOLDER)
+    shutil.rmtree(UPSTREAMS_FOLDER)
+    shutil.move(TMP_CHAINS_FOLDER, CHAINS_FOLDER)
+    shutil.move(TMP_UPSTREAMS_FOLDER, UPSTREAMS_FOLDER)
+    Path(TMP_CHAINS_FOLDER).mkdir(parents=True, exist_ok=True)
+    Path(TMP_UPSTREAMS_FOLDER).mkdir(parents=True, exist_ok=True)
+    logger.info('nginx configs moved')
 
 
 def monitor_nginx_container(d_client=None):
@@ -71,8 +86,8 @@ def generate_nginx_configs(schains_endpoints: list) -> None:
 
 
 def process_nginx_config_template(chain_info: dict, server_name: str) -> None:
-    chain_dest = os.path.join(CHAINS_FOLDER, f'{chain_info["schain_name"]}.conf')
-    upstream_dest = os.path.join(UPSTREAMS_FOLDER, f'{chain_info["schain_name"]}.conf')
+    chain_dest = os.path.join(TMP_CHAINS_FOLDER, f'{chain_info["schain_name"]}.conf')
+    upstream_dest = os.path.join(TMP_UPSTREAMS_FOLDER, f'{chain_info["schain_name"]}.conf')
     chain_info['server_name'] = server_name
     process_template(SCHAIN_NGINX_TEMPLATE, chain_dest, chain_info)
     process_template(UPSTREAM_NGINX_TEMPLATE, upstream_dest, chain_info)
