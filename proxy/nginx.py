@@ -25,7 +25,7 @@ import docker
 from proxy.helper import process_template
 from proxy.config import (
     SCHAIN_NGINX_TEMPLATE, UPSTREAM_NGINX_TEMPLATE, CHAINS_FOLDER, UPSTREAMS_FOLDER, SERVER_NAME,
-    NGINX_CONTAINER_NAME
+    NGINX_CONTAINER_NAME, CONTAINER_RUNNING_STATUS
 )
 
 
@@ -35,18 +35,32 @@ docker_client = docker.DockerClient()
 
 def update_nginx_configs(schains_endpoints: list) -> None:
     generate_nginx_configs(schains_endpoints)
-    restart_nginx_container()
+    monitor_nginx_container()
 
 
-def restart_nginx_container(d_client=None):
+def monitor_nginx_container(d_client=None):
     logger.info('Going to restart nginx container')
     d_client = d_client or docker_client
     nginx_container = d_client.containers.get(NGINX_CONTAINER_NAME)
-    res = nginx_container.exec_run(cmd='nginx -s reload')
+
+    if is_container_running(nginx_container):
+        reload_nginx(nginx_container)
+    else:
+        logger.info('nginx container is not running, trying to restart')
+        nginx_container.restart()
+
+
+def reload_nginx(container) -> int:
+    res = container.exec_run(cmd='nginx -s reload')
     if res != 0:
         logger.warning('Could not reload nginx configuration, check out nginx logs')
     else:
         logger.info('Successfully reloaded nginx service')
+    return res
+
+
+def is_container_running(container) -> bool:
+    return container.status == CONTAINER_RUNNING_STATUS
 
 
 def generate_nginx_configs(schains_endpoints: list) -> None:

@@ -49,3 +49,4 @@ PROXY_LOG_FORMAT = '[%(asctime)s] %(process)d %(levelname)s %(module)s: %(messag
 LONG_LINE = '=' * 100
 
 NGINX_CONTAINER_NAME = 'proxy_nginx'
+CONTAINER_RUNNING_STATUS = 'running'
