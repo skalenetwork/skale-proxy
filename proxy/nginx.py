@@ -44,8 +44,8 @@ def update_nginx_configs(schains_endpoints: list) -> None:
 def move_nginx_configs():
     """Moves nginx configs from the temporary directories to the main folders"""
     logger.info('Moving nginx configs from temporary directories...')
-    shutil.rmtree(CHAINS_FOLDER)
-    shutil.rmtree(UPSTREAMS_FOLDER)
+    shutil.rmtree(CHAINS_FOLDER, ignore_errors=True)
+    shutil.rmtree(UPSTREAMS_FOLDER, ignore_errors=True)
     shutil.move(TMP_CHAINS_FOLDER, CHAINS_FOLDER)
     shutil.move(TMP_UPSTREAMS_FOLDER, UPSTREAMS_FOLDER)
     Path(TMP_CHAINS_FOLDER).mkdir(parents=True, exist_ok=True)
