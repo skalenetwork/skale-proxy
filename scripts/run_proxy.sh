@@ -13,5 +13,6 @@ export ABIS_URL=$ABIS_URL
 
 bash $DIR/../proxy-ui/prepare_env_file.sh
 
+
 cd $DIR/..
 docker-compose up --build -d
