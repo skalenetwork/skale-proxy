@@ -29,7 +29,7 @@ from proxy.node_info import get_node_info
 from proxy.helper import read_json
 from proxy.config import ENDPOINT, SM_ABI_FILEPATH
 from proxy.str_formatters import arguments_list_string
-
+from proxy.schain_options import parse_schain_options
 
 logger = logging.getLogger(__name__)
 
@@ -97,9 +97,23 @@ def _compose_endpoints(node_dict, endpoint_type):
         node_dict[key_name] = f'{prefix}{node_dict[endpoint_type]}:{port}'
 
 
-def generate_endpoints_for_schain(schains_internal_contract, nodes_contract, schain_id):
+def generate_endpoints_for_schain(
+    schains_internal_contract,
+    schains_contract,
+    nodes_contract,
+    schain_id
+):
     """Generates endpoints list for a given SKALE chain"""
     schain = schains_internal_contract.functions.schains(schain_id).call()
+    schain_options_raw = schains_contract.functions.getOptions(schain_id).call()
+
+    schain_options = parse_schain_options(
+        raw_options=schain_options_raw
+    )
+
+    schain.append(schain_options.multitransaction_mode)
+    schain.append(schain_options.threshold_encryption)
+
     logger.info(f'Going to generate endpoints for sChain: {schain[0]}')
 
     node_ids = schains_internal_contract.functions.getNodesInGroup(schain_id).call()
@@ -126,11 +140,15 @@ def init_contracts(web3: Web3, sm_abi: str):
         address=sm_abi['schains_internal_address'],
         abi=sm_abi['schains_internal_abi']
     )
+    schains_contract = web3.eth.contract(
+        address=sm_abi['schains_address'],
+        abi=sm_abi['schains_abi']
+    )
     nodes_contract = web3.eth.contract(
         address=sm_abi['nodes_address'],
         abi=sm_abi['nodes_abi']
     )
-    return schains_internal_contract, nodes_contract
+    return schains_internal_contract, schains_contract, nodes_contract
 
 
 def generate_endpoints(endpoint: str, abi_filepath: str) -> list:
@@ -139,14 +157,15 @@ def generate_endpoints(endpoint: str, abi_filepath: str) -> list:
     web3 = Web3(provider)
     sm_abi = read_json(abi_filepath)
 
-    schains_internal_contract, nodes_contract = init_contracts(
+    schains_internal_contract, schains_contract, nodes_contract = init_contracts(
         web3=web3,
         sm_abi=sm_abi
     )
 
     logger.info(arguments_list_string({
         'nodes': nodes_contract.address,
-        'schains_internal': schains_internal_contract.address
+        'schains_internal': schains_internal_contract.address,
+        'schains': schains_contract.address
         }, 'Contracts inited'))
 
     schain_ids = schains_internal_contract.functions.getSchains().call()
@@ -155,7 +174,8 @@ def generate_endpoints(endpoint: str, abi_filepath: str) -> list:
 
     logger.info(f'Number of sChains: {len(schain_ids)}')
     endpoints = [
-        generate_endpoints_for_schain(schains_internal_contract, nodes_contract, schain_id)
+        generate_endpoints_for_schain(
+            schains_internal_contract, schains_contract, nodes_contract, schain_id)
         for schain_id in schain_ids
     ]
     return endpoints
