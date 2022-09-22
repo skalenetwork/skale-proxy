@@ -1,3 +1,13 @@
 *.crt
 *.key
 .env
+
+venv
+
+__pycache__
+
+abi.json
+chains.json
+
+conf/upstreams/*.conf
+conf/chains/*.conf
