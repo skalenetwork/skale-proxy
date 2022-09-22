@@ -1,32 +1,39 @@
-# skale-proxy
+# SKALE Proxy
 
-skale-proxy is a public service that provides proxied and load-balanced JSON-RPC endpoints for SKALE chains 
+[![Discord](https://img.shields.io/discord/534485763354787851.svg)](https://discord.gg/vvUtWJB)
 
+SKALE Proxy is high performance, easy-to-run public service that provides proxied and load-balanced 
+JSON-RPC endpoints for SKALE chains. It is based on NGINX.
 
-# running
+## Usage guide
 
+### Prerequisites
 
-1. Place you ABI json file into abi directory
+- Docker
+- docker-compose
 
-2. Set 'ABI_FILENAME directory' in docker-compose.yml to the name of the ABI file.
-      
-3. Set 'PROXY_FULL_HOST_NAME' in docker-compose.yml to the domain name of your proxy.
+### Repo setup
 
-4. Set 'ENDPOINT_PREFIX' in 'docker-compose.yml' to the endpoint prefix (must be non-empty!)
+1. Clone repo & all submodules  
+2. Put `abi.json`, `server.crt` and `server.key`files in `data` folder  
+3. Export all required environement variables (see below)
+4. Run `scripts/run_proxy.sh`
 
-5. Set 'ETH_ENDPOINT' in docker-compose to your ETH main net endpoint.
+#### Required environement variables
 
-6. Create 'data' directory and copy 'server.crt' and 'server.key' to it. 
-   The certificate need to be issued to 'PROXY_FULL_HOST_NAME'.
+- `NETWORKS`
+- `DOCS_WEBSITE_URL`
+- `MAIN_WEBSITE_URL`
+- `NETWORK_NAME`
+- `CHAIN_ID`
+- `EXPLORER_URL`
+- `BASE_PROXY_URL`
+- `ETH_ENDPOINT`
 
-  
-7. Run 'docker-compose pull && docker-compose up'  andf wait around a minute until skale-proxy reads schain info from blockchain and starts.
+## License
 
-8.  Try 'http://PROXY_FULL_HOST_NAME/api.json' . You should be able to see API descriptions. 
+[![License](https://img.shields.io/github/license/skalenetwork/skale-proxy.svg)](LICENSE)
 
- Voila!
+All contributions to SKALE Proxy are made under the [GNU Affero General Public License v3](https://www.gnu.org/licenses/agpl-3.0.en.html). See [LICENSE](LICENSE).
 
-# local development
-
-Set `FULL_PROXY_DOMAIN_NAME` to localhost and run `cert_gen.sh`. This will generate a self-signed cert in the `data/` directory.
-
+Copyright (C) 2022-Present SKALE Labs.

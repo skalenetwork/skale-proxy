@@ -2,31 +2,40 @@ version: '3'
 services:
   proxy-ui:
     image: proxy-ui:latest
+    container_name: proxy_ui
     build:
       context: ./proxy-ui
       dockerfile: Dockerfile
     ports:
-      - "5000:5000"
+      - "5001:5001"
   skale-proxy:
     environment:
-      PROXY_FULL_HOST_NAME: ${PROXY_FULL_HOST_NAME}
-      ETH_ENDPOINT: ${ENDPOINT}
-      ENDPOINT_PREFIX: mainnet
-      ABI_FILENAME: abi.json
+      SERVER_NAME: ${SERVER_NAME}
+      ETH_ENDPOINT: ${ETH_ENDPOINT}
     image: skale-proxy:latest
+    container_name: proxy_admin
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      - "80:80"
-      - "443:443"
     volumes:
-      -  /dev/urandom:/dev/random
-      -  ./data:/data
+      - ./data:/usr/src/proxy/data
+      - ./www:/usr/src/proxy/www
+      - ./conf:/usr/src/proxy/conf/
+      - /var/run/docker.sock:/var/run/docker.sock
     logging:
       driver: json-file
       options:
         max-size: "10m"
         max-file: "4"
     restart: unless-stopped
-
+  nginx:
+    image: nginx:1.20.2
+    container_name: proxy_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      -  ./data:/data
+      - ./www:/usr/share/nginx/www/files
+      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./conf:/etc/nginx/conf/
