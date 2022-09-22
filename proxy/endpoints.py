@@ -101,11 +101,11 @@ def generate_endpoints_for_schain(
     schains_internal_contract,
     schains_contract,
     nodes_contract,
-    schain_id
+    schain_hash
 ):
     """Generates endpoints list for a given SKALE chain"""
-    schain = schains_internal_contract.functions.schains(schain_id).call()
-    schain_options_raw = schains_contract.functions.getOptions(schain_id).call()
+    schain = schains_internal_contract.functions.schains(schain_hash).call()
+    schain_options_raw = schains_contract.functions.getOptions(schain_hash).call()
 
     schain_options = parse_schain_options(
         raw_options=schain_options_raw
@@ -116,11 +116,11 @@ def generate_endpoints_for_schain(
 
     logger.info(f'Going to generate endpoints for sChain: {schain[0]}')
 
-    node_ids = schains_internal_contract.functions.getNodesInGroup(schain_id).call()
+    node_ids = schains_internal_contract.functions.getNodesInGroup(schain_hash).call()
     nodes = []
     for node_id in node_ids:
         node = get_node_info(
-            schain_id=schain_id,
+            schain_hash=schain_hash,
             node_id=node_id,
             nodes_contract=nodes_contract,
             schains_internal_contract=schains_internal_contract
@@ -168,15 +168,13 @@ def generate_endpoints(endpoint: str, abi_filepath: str) -> list:
         'schains': schains_contract.address
         }, 'Contracts inited'))
 
-    schain_ids = schains_internal_contract.functions.getSchains().call()
+    schain_hashes = schains_internal_contract.functions.getSchains().call()
 
-    # schain_ids = [schain_ids[0]] # TODO: TMP!
-
-    logger.info(f'Number of sChains: {len(schain_ids)}')
+    logger.info(f'Number of sChains: {len(schain_hashes)}')
     endpoints = [
         generate_endpoints_for_schain(
-            schains_internal_contract, schains_contract, nodes_contract, schain_id)
-        for schain_id in schain_ids
+            schains_internal_contract, schains_contract, nodes_contract, schain_hash)
+        for schain_hash in schain_hashes
     ]
     return endpoints
 

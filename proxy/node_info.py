@@ -25,7 +25,7 @@ from proxy.helper import ip_from_bytes
 
 
 def get_node_info(
-    schain_id: str,
+    schain_hash: str,
     node_id: int,
     nodes_contract: Contract,
     schains_internal_contract: Contract
@@ -38,23 +38,23 @@ def get_node_info(
         'base_port': node[3],
         'domain': nodes_contract.functions.getNodeDomainName(node_id).call()
     }
-    schain_ids = schains_internal_contract.functions.getSchainHashesForNode(node_id).call()
+    schain_hashes = schains_internal_contract.functions.getSchainHashesForNode(node_id).call()
     node_dict['schain_base_port'] = _get_schain_base_port_on_node(
-        schain_id, schain_ids, node_dict['base_port']
+        schain_hash, schain_hashes, node_dict['base_port']
     )
     node_dict.update(_calc_ports(node_dict['schain_base_port']))
     return node_dict
 
 
-def _get_schain_index_in_node(schain_id, schains_ids_on_node):
-    for index, schain_id_on_node in enumerate(schains_ids_on_node):
-        if schain_id == schain_id_on_node:
+def _get_schain_index_in_node(schain_hash, schains_hashes_on_node):
+    for index, schain_hash_on_node in enumerate(schains_hashes_on_node):
+        if schain_hash == schain_hash_on_node:
             return index
-    raise Exception(f'sChain {schain_id} is not found in the list: {schains_ids_on_node}')
+    raise Exception(f'sChain {schain_hash} is not found in the list: {schains_hashes_on_node}')
 
 
-def _get_schain_base_port_on_node(schain_id, schains_ids_on_node, node_base_port):
-    schain_index = _get_schain_index_in_node(schain_id, schains_ids_on_node)
+def _get_schain_base_port_on_node(schain_hash, schains_hashes_on_node, node_base_port):
+    schain_index = _get_schain_index_in_node(schain_hash, schains_hashes_on_node)
     return _calc_schain_base_port(node_base_port, schain_index)
 
 
