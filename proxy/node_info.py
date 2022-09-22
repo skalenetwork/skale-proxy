@@ -38,7 +38,7 @@ def get_node_info(
         'base_port': node[3],
         'domain': nodes_contract.functions.getNodeDomainName(node_id).call()
     }
-    schain_ids = schains_internal_contract.functions.getSchainIdsForNode(node_id).call()
+    schain_ids = schains_internal_contract.functions.getSchainHashesForNode(node_id).call()
     node_dict['schain_base_port'] = _get_schain_base_port_on_node(
         schain_id, schain_ids, node_dict['base_port']
     )
