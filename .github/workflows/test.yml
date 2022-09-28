@@ -21,7 +21,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install python dependencies
-      run: bash ./scripts/install_python_dependencies.sh
+      run: bash ./scripts/install_python_dependencies_dev.sh
     - name: Lint with flake8
       run: flake8 .
     # - name: Deploy manager contracts
