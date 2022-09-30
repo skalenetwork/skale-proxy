@@ -1,10 +1,10 @@
 version: '3'
 services:
-  proxy-ui:
-    image: proxy-ui:latest
+  network-ui:
+    image: network-ui:latest
     container_name: proxy_ui
     build:
-      context: ./proxy-ui
+      context: ./network-ui
       dockerfile: Dockerfile
     ports:
       - "5001:5001"
