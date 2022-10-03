@@ -37,3 +37,4 @@ JSON-RPC endpoints for SKALE chains. It is based on NGINX.
 All contributions to SKALE Proxy are made under the [GNU Affero General Public License v3](https://www.gnu.org/licenses/agpl-3.0.en.html). See [LICENSE](LICENSE).
 
 Copyright (C) 2022-Present SKALE Labs.
+
