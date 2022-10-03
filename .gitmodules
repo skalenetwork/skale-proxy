@@ -1,7 +1,7 @@
-[submodule "proxy-ui"]
-	path = proxy-ui
-	url = https://github.com/skalenetwork/proxy-ui.git
-	branch = beta
+[submodule "network-ui"]
+	path = network-ui
+	url = https://github.com/skalenetwork/network-ui.git
+	branch = develop
 [submodule "helper-scripts"]
 	path = helper-scripts
 	url = https://github.com/skalenetwork/helper-scripts.git
