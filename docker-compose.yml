@@ -2,12 +2,17 @@ version: '3'
 services:
   network-ui:
     image: network-ui:latest
-    container_name: proxy_ui
+    container_name: network_ui
     build:
       context: ./network-ui
       dockerfile: Dockerfile
     ports:
       - "5001:5001"
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "5"
+        max-size: "200m"
   skale-proxy:
     environment:
       SERVER_NAME: ${SERVER_NAME}
@@ -23,10 +28,10 @@ services:
       - ./conf:/usr/src/proxy/conf/
       - /var/run/docker.sock:/var/run/docker.sock
     logging:
-      driver: json-file
+      driver: "json-file"
       options:
-        max-size: "10m"
-        max-file: "4"
+        max-file: "5"
+        max-size: "200m"
     restart: unless-stopped
   nginx:
     image: nginx:1.20.2
@@ -35,7 +40,12 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      -  ./data:/data
+      - ./data:/data
       - ./www:/usr/share/nginx/www/files
       - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./conf:/etc/nginx/conf/
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "5"
+        max-size: "200m"
