@@ -5,3 +5,4 @@
 [submodule "network-ui"]
 	path = network-ui
 	url = https://github.com/skalenetwork/network-ui.git
+	branch = develop
