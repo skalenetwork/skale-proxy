@@ -1,18 +1,18 @@
 upstream {{ schain_name }} {
     ip_hash;
     {% for endpoint in http_endpoints %}
-    server {{ endpoint }} max_fails=1 fail_timeout=600s;
+    server {{ endpoint }} max_fails=1 fail_timeout=10s;
     {% endfor %}
 }
 upstream ws-{{ schain_name }} {
     ip_hash;
     {% for endpoint in ws_endpoints %}
-    server {{ endpoint }} max_fails=1 fail_timeout=600s;
+    server {{ endpoint }} max_fails=1 fail_timeout=10s;
     {% endfor %}
 }
 upstream storage-{{ schain_name }} {
     ip_hash;
     {% for endpoint in fs_endpoints %}
-    server {{ endpoint }} max_fails=1 fail_timeout=600s;
+    server {{ endpoint }} max_fails=1 fail_timeout=10s;
     {% endfor %}
 }
