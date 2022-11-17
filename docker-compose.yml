@@ -7,8 +7,6 @@ services:
     build:
       context: ./network-ui
       dockerfile: Dockerfile
-    ports:
-      - "5001:5001"
     logging:
       driver: "json-file"
       options:
@@ -38,9 +36,6 @@ services:
     image: nginx:1.20.2
     container_name: proxy_nginx
     network_mode: host
-    ports:
-      - "80:80"
-      - "443:443"
     volumes:
       - ./data:/data
       - ./www:/usr/share/nginx/www/files
