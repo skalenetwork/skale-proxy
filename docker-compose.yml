@@ -3,11 +3,10 @@ services:
   network-ui:
     image: network-ui:latest
     container_name: network_ui
+    network_mode: host
     build:
       context: ./network-ui
       dockerfile: Dockerfile
-    ports:
-      - "5001:5001"
     logging:
       driver: "json-file"
       options:
@@ -36,9 +35,7 @@ services:
   nginx:
     image: nginx:1.20.2
     container_name: proxy_nginx
-    ports:
-      - "80:80"
-      - "443:443"
+    network_mode: host
     volumes:
       - ./data:/data
       - ./www:/usr/share/nginx/www/files
@@ -47,5 +44,5 @@ services:
     logging:
       driver: "json-file"
       options:
-        max-file: "5"
-        max-size: "200m"
+        max-file: "200"
+        max-size: "500m"
