@@ -43,6 +43,7 @@ services:
       - ./data:/data
       - ./www:/usr/share/nginx/www/files
       - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./config/status.conf:/etc/nginx/status.conf:ro
       - ./conf:/etc/nginx/conf/
     logging:
       driver: "json-file"
