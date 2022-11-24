@@ -81,7 +81,8 @@ def is_container_running(container) -> bool:
 def generate_nginx_configs(schains_endpoints: list) -> None:
     logger.info('Generating nginx configs...')
     for schain_endpoints in schains_endpoints:
-        if not schain_endpoints: continue
+        if not schain_endpoints:
+            continue
         logger.info(f'Processing template for {schain_endpoints["chain_info"]["schain_name"]}...')
         process_nginx_config_template(schain_endpoints['chain_info'], SERVER_NAME)
 
