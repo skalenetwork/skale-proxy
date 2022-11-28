@@ -107,10 +107,6 @@ def generate_endpoints_for_schain(
     schain = schains_internal_contract.functions.schains(schain_hash).call()
     schain_options_raw = schains_contract.functions.getOptions(schain_hash).call()
 
-    if (schain[0] == 'light-vast-diphda'):
-        logger.info('HOTFIX: Skipping light-vast-diphda chain')
-        return
-
     schain_options = parse_schain_options(
         raw_options=schain_options_raw
     )
@@ -129,6 +125,9 @@ def generate_endpoints_for_schain(
             nodes_contract=nodes_contract,
             schains_internal_contract=schains_internal_contract
         )
+        if (schain[0] == 'light-vast-diphda') and (node['ip'] == '54.39.177.39' or node['ip'] == '52.242.30.226'):
+            logger.info(f'HOTFIX: Skipping light-vast-diphda chain, node: {node["ip"]}') # TODO: hotfix
+            continue
         _compose_endpoints(node, endpoint_type='ip')
         _compose_endpoints(node, endpoint_type='domain')
         nodes.append(node)
@@ -180,7 +179,6 @@ def generate_endpoints(endpoint: str, abi_filepath: str) -> list:
             schains_internal_contract, schains_contract, nodes_contract, schain_hash)
         for schain_hash in schain_hashes
     ]
-    endpoints = list(filter(lambda item: item is not None, endpoints))  # TODO: hotfix!
     return endpoints
 
 
