@@ -184,7 +184,7 @@ def generate_endpoints(endpoint: str, abi_filepath: str) -> list:
             schains_internal_contract, schains_contract, nodes_contract, schain_hash)
         for schain_hash in schain_hashes
     ]
-    endpoints = list(filter(lambda item: item is not None, endpoints)) # TODO: hotfix!
+    endpoints = list(filter(lambda item: item is not None, endpoints))  # TODO: hotfix!
     return endpoints
 
 
