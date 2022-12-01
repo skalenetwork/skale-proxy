@@ -107,6 +107,10 @@ def generate_endpoints_for_schain(
     schain = schains_internal_contract.functions.schains(schain_hash).call()
     schain_options_raw = schains_contract.functions.getOptions(schain_hash).call()
 
+    if (schain[0] == 'light-vast-diphda'):
+        logger.info('HOTFIX: Skipping light-vast-diphda chain')
+        return
+
     schain_options = parse_schain_options(
         raw_options=schain_options_raw
     )
@@ -180,6 +184,7 @@ def generate_endpoints(endpoint: str, abi_filepath: str) -> list:
             schains_internal_contract, schains_contract, nodes_contract, schain_hash)
         for schain_hash in schain_hashes
     ]
+    endpoints = list(filter(lambda item: item is not None, endpoints)) # TODO: hotfix!
     return endpoints
 
 
