@@ -107,10 +107,6 @@ def generate_endpoints_for_schain(
     schain = schains_internal_contract.functions.schains(schain_hash).call()
     schain_options_raw = schains_contract.functions.getOptions(schain_hash).call()
 
-    if (schain[0] == 'light-vast-diphda'):
-        logger.info('HOTFIX: Skipping light-vast-diphda chain')
-        return
-
     schain_options = parse_schain_options(
         raw_options=schain_options_raw
     )
@@ -129,10 +125,6 @@ def generate_endpoints_for_schain(
             nodes_contract=nodes_contract,
             schains_internal_contract=schains_internal_contract
         )
-        blocked_ips = ['52.242.30.226', '54.39.177.39']  # TODO: hotfix
-        if (schain[0] == 'light-vast-diphda') and node['ip'] in blocked_ips:
-            logger.info(f'HOTFIX: Skipping light-vast-diphda chain, node: {node["ip"]}')
-            continue
         _compose_endpoints(node, endpoint_type='ip')
         _compose_endpoints(node, endpoint_type='domain')
         nodes.append(node)
