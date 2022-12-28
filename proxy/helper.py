@@ -52,7 +52,7 @@ def process_template(source, destination, data):
     template = None
     with open(source) as template_file:
         template = template_file.read()
-    processed_template = Environment().from_string(template).render(data)
+    processed_template = Environment(autoescape=True).from_string(template).render(data)
     with open(destination, "w") as f:
         f.write(processed_template)
 
