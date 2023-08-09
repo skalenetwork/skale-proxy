@@ -86,5 +86,5 @@ def make_rpc_call(http_endpoint, method, params=None):
         http_endpoint,
         json={"jsonrpc": "2.0", "method": method, "params": params, "id": 1}
     )
-    if resp.status_code == 200:
+    if resp and resp.status_code == 200:
         return resp
