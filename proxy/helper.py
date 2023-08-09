@@ -82,7 +82,9 @@ def post_request(url, json, cookies=None):
 
 def make_rpc_call(http_endpoint, method, params=None):
     params = params or []
-    return post_request(
+    resp = post_request(
         http_endpoint,
         json={"jsonrpc": "2.0", "method": method, "params": params, "id": 1}
     )
+    if resp.status_code == 200:
+        return resp

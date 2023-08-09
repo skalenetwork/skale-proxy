@@ -66,7 +66,7 @@ class ChainInfo:
             if not url_ok(http_endpoint):
                 logger.warning(f'{http_endpoint} is not accesible, removing from the list')
                 continue
-            if not is_node_out_of_sync(node['block_ts'], max_ts):
+            if is_node_out_of_sync(node['block_ts'], max_ts):
                 logger.warning(f'{http_endpoint} ts: {node["block_ts"]}, max ts for chain: \
 {max_ts}, allowed timestamp diff: {ALLOWED_TIMESTAMP_DIFF}')
                 continue
@@ -93,7 +93,7 @@ def url_ok(url) -> bool:
 
 
 def is_node_out_of_sync(ts: int, compare_ts: int) -> bool:
-    return abs(compare_ts - ts) < ALLOWED_TIMESTAMP_DIFF
+    return abs(compare_ts - ts) > ALLOWED_TIMESTAMP_DIFF
 
 
 def get_block_ts(http_endpoint: str) -> int:
