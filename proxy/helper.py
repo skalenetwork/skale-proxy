@@ -69,7 +69,6 @@ def init_default_logger():
     logging.basicConfig(level=logging.DEBUG, handlers=handlers)
 
 
-
 def post_request(url, json, cookies=None):
     try:
         return requests.post(
@@ -77,7 +76,7 @@ def post_request(url, json, cookies=None):
             json=json,
             cookies=cookies
         )
-    except requests.exceptions.RequestException as err:
+    except requests.exceptions.RequestException:
         return None
 
 
