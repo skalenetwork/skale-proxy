@@ -21,6 +21,7 @@ import sys
 import json
 import socket
 import logging
+import requests
 from logging import Formatter, StreamHandler
 
 from jinja2 import Environment
@@ -66,3 +67,24 @@ def init_default_logger():
     handlers.append(stream_handler)
 
     logging.basicConfig(level=logging.DEBUG, handlers=handlers)
+
+
+def post_request(url, json, cookies=None):
+    try:
+        return requests.post(
+            url,
+            json=json,
+            cookies=cookies
+        )
+    except requests.exceptions.RequestException:
+        return None
+
+
+def make_rpc_call(http_endpoint, method, params=None):
+    params = params or []
+    resp = post_request(
+        http_endpoint,
+        json={"jsonrpc": "2.0", "method": method, "params": params, "id": 1}
+    )
+    if resp and resp.status_code == 200:
+        return resp

@@ -26,10 +26,11 @@ from web3 import Web3, HTTPProvider
 from Crypto.Hash import keccak
 
 from proxy.node_info import get_node_info
-from proxy.helper import read_json
+from proxy.helper import read_json, make_rpc_call
 from proxy.config import ENDPOINT, SM_ABI_FILEPATH
 from proxy.str_formatters import arguments_list_string
 from proxy.schain_options import parse_schain_options
+from proxy.config import ALLOWED_TIMESTAMP_DIFF
 
 logger = logging.getLogger(__name__)
 
@@ -55,8 +56,19 @@ class ChainInfo:
     def _format_nodes(self, nodes):
         for node in nodes:
             http_endpoint = node['http_endpoint_domain']
+            node['block_ts'] = get_block_ts(http_endpoint)
+
+        max_ts = max(node['block_ts'] for node in nodes)
+        logger.info(f'max_ts: {max_ts}')
+
+        for node in nodes:
+            http_endpoint = node['http_endpoint_domain']
             if not url_ok(http_endpoint):
                 logger.warning(f'{http_endpoint} is not accesible, removing from the list')
+                continue
+            if is_node_out_of_sync(node['block_ts'], max_ts):
+                logger.warning(f'{http_endpoint} ts: {node["block_ts"]}, max ts for chain: \
+{max_ts}, allowed timestamp diff: {ALLOWED_TIMESTAMP_DIFF}')
                 continue
             self.http_endpoints.append(http_endpoint.removeprefix(URL_PREFIXES['http']))
             self.ws_endpoints.append(node['ws_endpoint_domain'].removeprefix(URL_PREFIXES['ws']))
@@ -78,6 +90,19 @@ def url_ok(url) -> bool:
         return bool(r.status_code)
     except requests.exceptions.ConnectionError:
         return False
+
+
+def is_node_out_of_sync(ts: int, compare_ts: int) -> bool:
+    return abs(compare_ts - ts) > ALLOWED_TIMESTAMP_DIFF
+
+
+def get_block_ts(http_endpoint: str) -> int:
+    res = make_rpc_call(http_endpoint, 'eth_getBlockByNumber', ['latest', False])
+    if res and res.json():
+        res_data = res.json()
+        latest_schain_timestamp_hex = res_data['result']['timestamp']
+        return int(latest_schain_timestamp_hex, 16)
+    return -1
 
 
 def schain_name_to_id(name: str) -> str:
