@@ -2,7 +2,3 @@
 	path = helper-scripts
 	url = https://github.com/skalenetwork/helper-scripts.git
 	branch = develop
-[submodule "network-ui"]
-	path = network-ui
-	url = https://github.com/skalenetwork/network-ui.git
-	branch = develop
