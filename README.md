@@ -22,7 +22,6 @@ JSON-RPC endpoints for SKALE chains. It is based on NGINX.
 #### Required environment variables
 
 - `ENDPOINT` - endpoint of the Ethereum network where `skale-manager` contracts are deployed
-- `SERVER_NAME` - domain name of the server
 
 ## License
 

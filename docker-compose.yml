@@ -2,7 +2,6 @@ version: '3'
 services:
   skale-proxy:
     environment:
-      SERVER_NAME: ${SERVER_NAME}
       ETH_ENDPOINT: ${ETH_ENDPOINT}
     image: skale-proxy:latest
     container_name: proxy_admin
