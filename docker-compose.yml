@@ -1,17 +1,5 @@
 version: '3'
 services:
-  network-ui:
-    image: network-ui:latest
-    container_name: network_ui
-    network_mode: host
-    build:
-      context: ./network-ui
-      dockerfile: Dockerfile
-    logging:
-      driver: "json-file"
-      options:
-        max-file: "5"
-        max-size: "200m"
   skale-proxy:
     environment:
       SERVER_NAME: ${SERVER_NAME}

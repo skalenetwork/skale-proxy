@@ -16,19 +16,13 @@ JSON-RPC endpoints for SKALE chains. It is based on NGINX.
 
 1. Clone repo & all submodules  
 2. Put `abi.json`, `server.crt` and `server.key`files in `data` folder  
-3. Export all required environement variables (see below)
+3. Export all required environment variables (see below)
 4. Run `scripts/run_proxy.sh`
 
-#### Required environement variables
+#### Required environment variables
 
-- `NETWORKS`
-- `DOCS_WEBSITE_URL`
-- `MAIN_WEBSITE_URL`
-- `NETWORK_NAME`
-- `CHAIN_ID`
-- `EXPLORER_URL`
-- `BASE_PROXY_URL`
-- `ETH_ENDPOINT`
+- `ENDPOINT` - endpoint of the Ethereum network where `skale-manager` contracts are deployed
+- `SERVER_NAME` - domain name of the server
 
 ## License
 
