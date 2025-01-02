@@ -97,11 +97,14 @@ def is_node_out_of_sync(ts: int, compare_ts: int) -> bool:
 
 
 def get_block_ts(http_endpoint: str) -> int:
-    res = make_rpc_call(http_endpoint, 'eth_getBlockByNumber', ['latest', False])
-    if res and res.json():
-        res_data = res.json()
-        latest_schain_timestamp_hex = res_data['result']['timestamp']
-        return int(latest_schain_timestamp_hex, 16)
+    try:
+        res = make_rpc_call(http_endpoint, 'eth_getBlockByNumber', ['latest', False])
+        if res and res.json():
+            res_data = res.json()
+            latest_schain_timestamp_hex = res_data['result']['timestamp']
+            return int(latest_schain_timestamp_hex, 16)
+    except Exception as e:
+        logger.warning(f'Failed to request latest block for {http_endpoint} ({e})')
     return -1
 
 
