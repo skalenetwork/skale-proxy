@@ -45,7 +45,6 @@ def calc_avg_gas_price():
         block = w3.eth.get_block(block_number)
         total_gas_used += block['baseFeePerGas']
 
-    avg_gas_price = total_gas_used / GAS_ESTIMATION_ITERATIONS
-    avg_gas_price_gwei = Web3.from_wei(avg_gas_price, 'gwei')
-    logger.info(f'avg_gas_price_gwei: {avg_gas_price_gwei}')
-    return avg_gas_price_gwei
+    avg_gas_price = int(total_gas_used / GAS_ESTIMATION_ITERATIONS)
+    logger.info(f'avg_gas_price: {avg_gas_price}')
+    return avg_gas_price
