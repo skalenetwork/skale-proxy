@@ -38,6 +38,7 @@ ruff format src/
 #### Optional environment variables
 
 - `HEARTBEAT_URL` - URL for healthcheck endpoint (optional)
+- `USE_ELB` - Set to `True` if the proxy is deployed behind a load balancer (like AWS ELB) that sets the `X-Forwarded-For` header. This configures Nginx to correctly identify the client's real IP address for rate limiting. Defaults to `False` if not set.
 
 ## License
 
