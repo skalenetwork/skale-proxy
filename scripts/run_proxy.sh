@@ -43,4 +43,4 @@ fi
 
 # Proceed with docker compose (original script logic)
 cd "$PROJECT_DIR"
-#docker compose up --build -d
+docker compose up --build -d
