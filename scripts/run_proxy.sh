@@ -4,15 +4,15 @@ set -e
 
 # Ensure required variables are set
 : "${ETH_ENDPOINT?Need to set ETH_ENDPOINT}"
-# Default USE_ELB to 'false' if not explicitly set. Controls whether to keep the 
-# ELB (Elastic Load Balancer) block  to fix real origin IP in the Nginx config.
-: "${USE_ELB:=False}"
+# Default USE_ALB to 'false' if not explicitly set. Controls whether to keep the 
+# ALB (Application Load Balancer) block  to fix real origin IP in the Nginx config.
+: "${USE_ALB:=False}"
 
 # Determine script directory and project root
 export SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PROJECT_DIR=$(dirname $SCRIPT_DIR)
 
-##### ELASTICSEARCH CONFIGURATION START #####
+##### LOAD BALANCER REAL IP CONFIGURATION START #####
 
 # Define file paths relative to project root.
 CONFIG_DIR="$PROJECT_DIR/config"
@@ -31,12 +31,12 @@ if [ ! -f "$TEMPLATE_FILE" ]; then
     exit 1
 fi
 
-if [[ "$USE_ELB" == "True" ]]; then
-    # ELB mode enabled. Nginx configuration block will remain.
+if [[ "$USE_ALB" == "True" ]]; then
+    # ALB mode enabled. Nginx configuration block will remain.
     # Copy the template directly, it already has the config block.
     cp "$TEMPLATE_FILE" "$TARGET_FILE"
 else
-    # ELB mode disabled. Remove real IP configuration block from template.
+    # ALB mode disabled. Remove real IP configuration block from template.
     # Use sed to delete the block between the markers (inclusive) and write to target
     sed "/${START_MARKER}/,/${END_MARKER}/d" "$TEMPLATE_FILE" > "$TARGET_FILE"
 fi
