@@ -24,13 +24,14 @@ logger = logging.getLogger(__name__)
 
 
 def send_heartbeat(heartbeat_url):
-    if heartbeat_url is None:
-        logger.info('HEARTBEAT_URL is not set on the proxy')
-    try:
-        response = requests.get(heartbeat_url)
-        if response.status_code == 200:
-            logger.info('Heartbeat signal is successfully sent')
-        else:
-            logger.warning(f'Failed to send heartbeat signal: {response.status_code}')
-    except Exception as e:
-        logger.error(f'Failed to send heartbeat signal: {e}')
+    if heartbeat_url:
+        try:
+            response = requests.get(heartbeat_url, timeout=10)
+            if response.status_code == 200:
+                logger.info('Heartbeat signal is successfully sent')
+            else:
+                logger.warning(f'Failed to send heartbeat signal: {response.status_code}')
+        except Exception as e:
+            logger.error(f'Failed to send heartbeat signal: {e}')
+    else:
+        logger.info('HEARTBEAT_URL is not set or empty')
