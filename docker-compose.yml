@@ -21,7 +21,7 @@ services:
     restart: unless-stopped
 
   nginx:
-    image: nginx:1.24.0
+    image: nginx:1.29.1
     container_name: proxy_nginx
     network_mode: host
     volumes:
@@ -80,6 +80,7 @@ services:
 
 volumes:
   mysql_data:
+
 
 networks:
   proxy:

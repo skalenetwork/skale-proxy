@@ -28,7 +28,7 @@ class SchainOptions:
     def to_tuples(self) -> list:
         return [
             ('multitr', bool_to_bytes(self.multitransaction_mode)),
-            ('encrypt', bool_to_bytes(self.threshold_encryption))
+            ('encrypt', bool_to_bytes(self.threshold_encryption)),
         ]
 
 
@@ -41,15 +41,12 @@ def parse_schain_options(raw_options: list) -> SchainOptions:
         return get_default_schain_options()
     return SchainOptions(
         multitransaction_mode=bytes_to_bool(raw_options[0][1]),
-        threshold_encryption=bytes_to_bool(raw_options[1][1])
+        threshold_encryption=bytes_to_bool(raw_options[1][1]),
     )
 
 
 def get_default_schain_options() -> SchainOptions:
-    return SchainOptions(
-        multitransaction_mode=False,
-        threshold_encryption=False
-    )
+    return SchainOptions(multitransaction_mode=False, threshold_encryption=False)
 
 
 def bool_to_bytes(bool_value: bool) -> bytes:
