@@ -40,7 +40,7 @@ URL_PREFIXES = {
     'https': 'https://',
     'ws': 'ws://',
     'wss': 'wss://',
-    'infoHttp': 'http://'
+    'infoHttp': 'http://',
 }
 
 
@@ -67,8 +67,10 @@ class ChainInfo:
                 logger.warning(f'{http_endpoint} is not accesible, removing from the list')
                 continue
             if is_node_out_of_sync(node['block_ts'], max_ts):
-                logger.warning(f'{http_endpoint} ts: {node["block_ts"]}, max ts for chain: \
-{max_ts}, allowed timestamp diff: {ALLOWED_TIMESTAMP_DIFF}')
+                logger.warning(
+                    f'{http_endpoint} ts: {node["block_ts"]}, max ts for chain: \
+{max_ts}, allowed timestamp diff: {ALLOWED_TIMESTAMP_DIFF}'
+                )
                 continue
             self.http_endpoints.append(http_endpoint.removeprefix(URL_PREFIXES['http']))
             self.ws_endpoints.append(node['ws_endpoint_domain'].removeprefix(URL_PREFIXES['ws']))
@@ -80,7 +82,7 @@ class ChainInfo:
             'chain_id': self.chain_id,
             'http_endpoints': self.http_endpoints,
             'ws_endpoints': self.ws_endpoints,
-            'fs_endpoints': self.fs_endpoints
+            'fs_endpoints': self.fs_endpoints,
         }
 
 
@@ -109,7 +111,7 @@ def get_block_ts(http_endpoint: str) -> int:
 
 
 def schain_name_to_id(name: str) -> str:
-    keccak_hash = keccak.new(data=name.encode("utf8"), digest_bits=256)
+    keccak_hash = keccak.new(data=name.encode('utf8'), digest_bits=256)
     return '0x' + keccak_hash.hexdigest()
 
 
@@ -126,18 +128,13 @@ def _compose_endpoints(node_dict, endpoint_type):
 
 
 def generate_endpoints_for_schain(
-    schains_internal_contract,
-    schains_contract,
-    nodes_contract,
-    schain_hash
+    schains_internal_contract, schains_contract, nodes_contract, schain_hash
 ):
     """Generates endpoints list for a given SKALE chain"""
     schain = schains_internal_contract.functions.schains(schain_hash).call()
     schain_options_raw = schains_contract.functions.getOptions(schain_hash).call()
 
-    schain_options = parse_schain_options(
-        raw_options=schain_options_raw
-    )
+    schain_options = parse_schain_options(raw_options=schain_options_raw)
 
     schain.append(schain_options.multitransaction_mode)
     schain.append(schain_options.threshold_encryption)
@@ -151,31 +148,22 @@ def generate_endpoints_for_schain(
             schain_hash=schain_hash,
             node_id=node_id,
             nodes_contract=nodes_contract,
-            schains_internal_contract=schains_internal_contract
+            schains_internal_contract=schains_internal_contract,
         )
         _compose_endpoints(node, endpoint_type='ip')
         _compose_endpoints(node, endpoint_type='domain')
         nodes.append(node)
-    return {
-        'schain': schain,
-        'nodes': nodes,
-        'chain_info': ChainInfo(schain[0], nodes).to_dict()
-    }
+    return {'schain': schain, 'nodes': nodes, 'chain_info': ChainInfo(schain[0], nodes).to_dict()}
 
 
 def init_contracts(web3: Web3, sm_abi: str):
     schains_internal_contract = web3.eth.contract(
-        address=sm_abi['schains_internal_address'],
-        abi=sm_abi['schains_internal_abi']
+        address=sm_abi['schains_internal_address'], abi=sm_abi['schains_internal_abi']
     )
     schains_contract = web3.eth.contract(
-        address=sm_abi['schains_address'],
-        abi=sm_abi['schains_abi']
+        address=sm_abi['schains_address'], abi=sm_abi['schains_abi']
     )
-    nodes_contract = web3.eth.contract(
-        address=sm_abi['nodes_address'],
-        abi=sm_abi['nodes_abi']
-    )
+    nodes_contract = web3.eth.contract(address=sm_abi['nodes_address'], abi=sm_abi['nodes_abi'])
     return schains_internal_contract, schains_contract, nodes_contract
 
 
@@ -186,22 +174,27 @@ def generate_endpoints(endpoint: str, abi_filepath: str) -> list:
     sm_abi = read_json(abi_filepath)
 
     schains_internal_contract, schains_contract, nodes_contract = init_contracts(
-        web3=web3,
-        sm_abi=sm_abi
+        web3=web3, sm_abi=sm_abi
     )
 
-    logger.info(arguments_list_string({
-        'nodes': nodes_contract.address,
-        'schains_internal': schains_internal_contract.address,
-        'schains': schains_contract.address
-        }, 'Contracts inited'))
+    logger.info(
+        arguments_list_string(
+            {
+                'nodes': nodes_contract.address,
+                'schains_internal': schains_internal_contract.address,
+                'schains': schains_contract.address,
+            },
+            'Contracts inited',
+        )
+    )
 
     schain_hashes = schains_internal_contract.functions.getSchains().call()
 
     logger.info(f'Number of sChains: {len(schain_hashes)}')
     endpoints = [
         generate_endpoints_for_schain(
-            schains_internal_contract, schains_contract, nodes_contract, schain_hash)
+            schains_internal_contract, schains_contract, nodes_contract, schain_hash
+        )
         for schain_hash in schain_hashes
     ]
     endpoints = list(filter(lambda item: item is not None, endpoints))  # TODO: hotfix!

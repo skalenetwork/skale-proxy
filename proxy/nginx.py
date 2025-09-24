@@ -26,8 +26,14 @@ import docker
 
 from proxy.helper import process_template
 from proxy.config import (
-    SCHAIN_NGINX_TEMPLATE, UPSTREAM_NGINX_TEMPLATE, CHAINS_FOLDER, UPSTREAMS_FOLDER,
-    NGINX_CONTAINER_NAME, CONTAINER_RUNNING_STATUS, TMP_CHAINS_FOLDER, TMP_UPSTREAMS_FOLDER
+    SCHAIN_NGINX_TEMPLATE,
+    UPSTREAM_NGINX_TEMPLATE,
+    CHAINS_FOLDER,
+    UPSTREAMS_FOLDER,
+    NGINX_CONTAINER_NAME,
+    CONTAINER_RUNNING_STATUS,
+    TMP_CHAINS_FOLDER,
+    TMP_UPSTREAMS_FOLDER,
 )
 
 
@@ -81,9 +87,11 @@ def is_container_running(container) -> bool:
 def generate_nginx_configs(schains_endpoints: list) -> None:
     logger.info('Generating nginx configs...')
     for schain_endpoints in schains_endpoints:
-        if not schain_endpoints:
+        name = schain_endpoints['chain_info']['schain_name']
+        if not schain_endpoints or len(schain_endpoints['chain_info']['http_endpoints']) == 0:
+            logger.warning(f'No endpoints found, skipping config generation for {name}')
             continue
-        logger.info(f'Processing template for {schain_endpoints["chain_info"]["schain_name"]}...')
+        logger.info(f'Processing template for {name}...')
         process_nginx_config_template(schain_endpoints['chain_info'])
 
 

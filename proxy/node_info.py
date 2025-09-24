@@ -25,10 +25,7 @@ from proxy.helper import ip_from_bytes
 
 
 def get_node_info(
-    schain_hash: str,
-    node_id: int,
-    nodes_contract: Contract,
-    schains_internal_contract: Contract
+    schain_hash: str, node_id: int, nodes_contract: Contract, schains_internal_contract: Contract
 ) -> dict:
     node = nodes_contract.functions.nodes(node_id).call()
     node_dict = {
@@ -36,7 +33,7 @@ def get_node_info(
         'name': node[0],
         'ip': ip_from_bytes(node[1]),
         'base_port': node[3],
-        'domain': nodes_contract.functions.getNodeDomainName(node_id).call()
+        'domain': nodes_contract.functions.getNodeDomainName(node_id).call(),
     }
     schain_hashes = schains_internal_contract.functions.getSchainHashesForNode(node_id).call()
     node_dict['schain_base_port'] = _get_schain_base_port_on_node(
@@ -68,5 +65,5 @@ def _calc_ports(schain_base_port):
         'httpsRpcPort': schain_base_port + SkaledPorts.HTTPS_JSON.value,
         'wsRpcPort': schain_base_port + SkaledPorts.WS_JSON.value,
         'wssRpcPort': schain_base_port + SkaledPorts.WSS_JSON.value,
-        'infoHttpRpcPort': schain_base_port + SkaledPorts.INFO_HTTP_JSON.value
+        'infoHttpRpcPort': schain_base_port + SkaledPorts.INFO_HTTP_JSON.value,
     }

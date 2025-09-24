@@ -27,8 +27,13 @@ from proxy.helper import init_default_logger, write_json
 from proxy.heartbeat import send_heartbeat
 from proxy.str_formatters import arguments_list_string
 from proxy.config import (
-    CHAINS_INFO_FILEPATH, MONITOR_INTERVAL, ENDPOINT, SM_ABI_FILEPATH,
-    TMP_CHAINS_FOLDER, TMP_UPSTREAMS_FOLDER, HEARTBEAT_URL
+    CHAINS_INFO_FILEPATH,
+    MONITOR_INTERVAL,
+    ENDPOINT,
+    SM_ABI_FILEPATH,
+    TMP_CHAINS_FOLDER,
+    TMP_UPSTREAMS_FOLDER,
+    HEARTBEAT_URL,
 )
 
 
@@ -37,9 +42,7 @@ logger = logging.getLogger(__name__)
 
 def main():
     init_default_logger()
-    logger.info(arguments_list_string({
-        'Endpoint': ENDPOINT
-        }, 'Starting SKALE Proxy server'))
+    logger.info(arguments_list_string({'Endpoint': ENDPOINT}, 'Starting SKALE Proxy server'))
 
     Path(TMP_CHAINS_FOLDER).mkdir(parents=True, exist_ok=True)
     Path(TMP_UPSTREAMS_FOLDER).mkdir(parents=True, exist_ok=True)
