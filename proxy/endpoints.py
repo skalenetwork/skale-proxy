@@ -21,17 +21,15 @@ import json
 import logging
 
 import requests
-
-from web3 import Web3, HTTPProvider
 from Crypto.Hash import keccak
+from web3 import HTTPProvider, Web3
 
 from metrics.src.config import NETWORK_NAME
+from proxy.config import ALLOWED_TIMESTAMP_DIFF, ENDPOINT, GITHUB_RAW_URL, SM_ABI_FILEPATH
+from proxy.helper import make_rpc_call, read_json
 from proxy.node_info import get_node_info
-from proxy.helper import read_json, make_rpc_call
-from proxy.config import ENDPOINT, SM_ABI_FILEPATH, GITHUB_RAW_URL
-from proxy.str_formatters import arguments_list_string
 from proxy.schain_options import parse_schain_options
-from proxy.config import ALLOWED_TIMESTAMP_DIFF
+from proxy.str_formatters import arguments_list_string
 
 logger = logging.getLogger(__name__)
 

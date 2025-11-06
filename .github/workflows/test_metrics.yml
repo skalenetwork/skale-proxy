@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.12]
+        python-version: [3.13]
     env:
       ETH_ENDPOINT: ${{ secrets.ETH_ENDPOINT }}
       PYTHONPATH: ${{ github.workspace }}/metrics
@@ -19,21 +19,22 @@ jobs:
       MYSQL_HOST: 127.0.0.1
       MYSQL_DATABASE: metrics
     steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: true
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-        cache: 'pip'
-    - name: Install python dependencies
-      run: pip install -r requirements.txt && pip install -r requirements-dev.txt
-    - name: Lint with ruff
-      run: ruff check src/
-    - name: Run MySQL container
-      run: docker compose up -d db
-    - name: Prepare database
-      run: python tests/prepare_db.py
-    - name: Run metrics tests
-      run: pytest tests/
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Set up Python 3.13
+        run: uv python install 3.13
+      - name: Install python dependencies
+        run: uv sync --all-extras
+      - name: Lint with ruff
+        run: ruff check src/
+      - name: Run MySQL container
+        run: docker compose up -d db
+      - name: Prepare database
+        run: python tests/prepare_db.py
+      - name: Run metrics tests
+        run: pytest tests/

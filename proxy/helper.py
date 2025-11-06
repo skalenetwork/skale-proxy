@@ -17,13 +17,13 @@
 #   You should have received a copy of the GNU Affero General Public License
 #   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import sys
 import json
-import socket
 import logging
-import requests
+import socket
+import sys
 from logging import Formatter, StreamHandler
 
+import requests
 from jinja2 import Environment
 
 from proxy.config import PROXY_LOG_FORMAT
