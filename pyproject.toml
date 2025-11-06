@@ -1,26 +1,17 @@
 [project]
-name = "skale-metrics"
+name = "skale-proxy"
 version = "2.2.0"
 requires-python = ">=3.13"
 dependencies = [
     "web3==7.14.0",
+    "Jinja2==3.1.6",
+    "colorful==0.5.8",
+    "docker==7.1.0",
     "requests==2.32.5",
-    "aiohttp==3.13.2",
-    "peewee==3.18.3",
-    "PyMySQL==1.1.2",
-    "cryptography==46.0.3",
 ]
 
 [project.optional-dependencies]
-dev = [
-    "ruff==0.14.3",
-    "pytest==8.4.2",
-    "Faker==37.12.0",
-    "pytest-aiohttp==1.1.0",
-    "eth-typing==5.2.1",
-    "eth-utils==5.3.1",
-    "types-peewee==3.18.2.20250710",
-]
+dev = ["ruff==0.14.3", "mypy==1.18.2"]
 
 [tool.uv]
 prerelease = "allow"

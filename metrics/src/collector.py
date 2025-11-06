@@ -179,20 +179,28 @@ async def collect_metrics(network_name: str) -> MetricsData:
         metrics: Dict[str, ChainMetrics] = {}
 
         for chain_name, chain_info in metadata.items():
+            logger.info(f'Collecting metrics for chain {chain_name}...')
             if chain_name == OFFCHAIN_KEY:
                 continue
-            chain_stats = await get_chain_stats(session, network_name, chain_name)
-            apps_counters = None
+            try:
+                chain_stats = await get_chain_stats(session, network_name, chain_name)
+                if chain_stats is None:
+                    logger.warning(f'No chain stats available for {chain_name}. Skipping.')
+                    continue
 
-            if 'apps' in chain_info:
-                apps_counters = await fetch_counters_for_apps(
-                    session, chain_info, network_name, chain_name
-                )
+                apps_counters = None
+                if 'apps' in chain_info:
+                    apps_counters = await fetch_counters_for_apps(
+                        session, chain_info, network_name, chain_name
+                    )
 
-            metrics[chain_name] = {
-                'chain_stats': chain_stats,
-                'apps_counters': transform_to_dict(apps_counters),
-            }
+                metrics[chain_name] = {
+                    'chain_stats': chain_stats,
+                    'apps_counters': transform_to_dict(apps_counters),
+                }
+            except Exception as e:
+                logger.exception(f'Error collecting metrics for chain {chain_name}: {e}')
+                continue
 
         data: MetricsData = {
             'metrics': metrics,

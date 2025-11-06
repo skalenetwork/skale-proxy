@@ -1,7 +1,0 @@
-ruff==0.6.4
-pytest==8.3.3
-Faker==28.4.1
-pytest-aiohttp==1.0.5
-eth-typing==4.0.0
-eth-utils==4.0.0
-types-peewee==3.17.7.20241017
