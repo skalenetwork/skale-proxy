@@ -91,13 +91,23 @@ def generate_nginx_configs(schains_endpoints: list) -> None:
         if not schain_endpoints or len(schain_endpoints['chain_info']['http_endpoints']) == 0:
             logger.warning(f'No endpoints found, skipping config generation for {name}')
             continue
+
+        short_alias = None
+        if (
+            'chain_metadata' in schain_endpoints
+            and schain_endpoints['chain_metadata'] is not None
+            and 'shortAlias' in schain_endpoints['chain_metadata']
+        ):
+            short_alias = schain_endpoints['chain_metadata']['shortAlias']
+
         logger.info(f'Processing template for {name}...')
-        process_nginx_config_template(schain_endpoints['chain_info'])
+        process_nginx_config_template(schain_endpoints['chain_info'], short_alias)
 
 
-def process_nginx_config_template(chain_info: dict) -> None:
+def process_nginx_config_template(chain_info: dict, short_alias: str | None) -> None:
     chain_dest = os.path.join(TMP_CHAINS_FOLDER, f'{chain_info["schain_name"]}.conf')
     upstream_dest = os.path.join(TMP_UPSTREAMS_FOLDER, f'{chain_info["schain_name"]}.conf')
+    chain_info['short_alias'] = short_alias
     process_template(SCHAIN_NGINX_TEMPLATE, chain_dest, chain_info)
     process_template(UPSTREAM_NGINX_TEMPLATE, upstream_dest, chain_info)
 

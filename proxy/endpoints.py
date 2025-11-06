@@ -25,9 +25,10 @@ import requests
 from web3 import Web3, HTTPProvider
 from Crypto.Hash import keccak
 
+from metrics.src.config import NETWORK_NAME
 from proxy.node_info import get_node_info
 from proxy.helper import read_json, make_rpc_call
-from proxy.config import ENDPOINT, SM_ABI_FILEPATH
+from proxy.config import ENDPOINT, SM_ABI_FILEPATH, GITHUB_RAW_URL
 from proxy.str_formatters import arguments_list_string
 from proxy.schain_options import parse_schain_options
 from proxy.config import ALLOWED_TIMESTAMP_DIFF
@@ -86,6 +87,18 @@ class ChainInfo:
         }
 
 
+def download_metadata(network_name: str) -> dict | None:
+    """Download and parse network metadata."""
+    url = f'{GITHUB_RAW_URL}/skalenetwork/skale-network/master/metadata/{network_name}/chains.json'
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        logger.error(f'Failed to download metadata from {url}: {e}')
+        return None
+
+
 def url_ok(url) -> bool:
     try:
         r = requests.head(url, timeout=10)
@@ -128,7 +141,7 @@ def _compose_endpoints(node_dict, endpoint_type):
 
 
 def generate_endpoints_for_schain(
-    schains_internal_contract, schains_contract, nodes_contract, schain_hash
+    schains_internal_contract, schains_contract, nodes_contract, schain_hash, chains_metadata
 ):
     """Generates endpoints list for a given SKALE chain"""
     schain = schains_internal_contract.functions.schains(schain_hash).call()
@@ -153,7 +166,18 @@ def generate_endpoints_for_schain(
         _compose_endpoints(node, endpoint_type='ip')
         _compose_endpoints(node, endpoint_type='domain')
         nodes.append(node)
-    return {'schain': schain, 'nodes': nodes, 'chain_info': ChainInfo(schain[0], nodes).to_dict()}
+
+    chain_metadata = None
+    if chains_metadata and schain[0] in chains_metadata:
+        chain_metadata = chains_metadata[schain[0]]
+        if 'apps' in chain_metadata:
+            chain_metadata.pop('apps')
+    return {
+        'schain': schain,
+        'nodes': nodes,
+        'chain_info': ChainInfo(schain[0], nodes).to_dict(),
+        'chain_metadata': chain_metadata,
+    }
 
 
 def init_contracts(web3: Web3, sm_abi: str):
@@ -172,6 +196,8 @@ def generate_endpoints(endpoint: str, abi_filepath: str) -> list:
     provider = HTTPProvider(endpoint)
     web3 = Web3(provider)
     sm_abi = read_json(abi_filepath)
+
+    chains_metadata = download_metadata(network_name=NETWORK_NAME)
 
     schains_internal_contract, schains_contract, nodes_contract = init_contracts(
         web3=web3, sm_abi=sm_abi
@@ -193,7 +219,11 @@ def generate_endpoints(endpoint: str, abi_filepath: str) -> list:
     logger.info(f'Number of sChains: {len(schain_hashes)}')
     endpoints = [
         generate_endpoints_for_schain(
-            schains_internal_contract, schains_contract, nodes_contract, schain_hash
+            schains_internal_contract,
+            schains_contract,
+            nodes_contract,
+            schain_hash,
+            chains_metadata,
         )
         for schain_hash in schain_hashes
     ]
