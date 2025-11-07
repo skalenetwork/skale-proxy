@@ -25,8 +25,13 @@ import requests
 from Crypto.Hash import keccak
 from web3 import HTTPProvider, Web3
 
-from metrics.src.config import NETWORK_NAME
-from proxy.config import ALLOWED_TIMESTAMP_DIFF, ENDPOINT, GITHUB_RAW_URL, SM_ABI_FILEPATH
+from proxy.config import (
+    ALLOWED_TIMESTAMP_DIFF,
+    ENDPOINT,
+    GITHUB_RAW_URL,
+    NETWORK_NAME,
+    SM_ABI_FILEPATH,
+)
 from proxy.helper import make_rpc_call, read_json
 from proxy.node_info import get_node_info
 from proxy.schain_options import parse_schain_options

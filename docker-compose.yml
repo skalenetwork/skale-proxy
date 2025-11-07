@@ -3,6 +3,7 @@ services:
     environment:
       ETH_ENDPOINT: ${ETH_ENDPOINT}
       HEARTBEAT_URL: ${HEARTBEAT_URL}
+      NETWORK_NAME: ${NETWORK_NAME}
     image: skale-proxy:latest
     container_name: proxy_admin
     build:
