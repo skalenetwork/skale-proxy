@@ -19,6 +19,7 @@
 
 import json
 import logging
+from time import sleep
 
 import requests
 from Crypto.Hash import keccak
@@ -104,6 +105,7 @@ def download_metadata(network_name: str) -> dict | None:
                     f'Failed to download metadata from {url} '
                     f'(attempt {attempt + 1}/{max_retries}): {e}'
                 )
+                sleep(2)
             else:
                 raise ChainsMetadataDownloadError(e)
 
