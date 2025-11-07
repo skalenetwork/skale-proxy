@@ -17,25 +17,24 @@
 #   You should have received a copy of the GNU Affero General Public License
 #   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import logging
 import os
 import shutil
-import logging
 from pathlib import Path
 
 import docker
 
-from proxy.helper import process_template
 from proxy.config import (
-    SCHAIN_NGINX_TEMPLATE,
-    UPSTREAM_NGINX_TEMPLATE,
     CHAINS_FOLDER,
-    UPSTREAMS_FOLDER,
-    NGINX_CONTAINER_NAME,
     CONTAINER_RUNNING_STATUS,
+    NGINX_CONTAINER_NAME,
+    SCHAIN_NGINX_TEMPLATE,
     TMP_CHAINS_FOLDER,
     TMP_UPSTREAMS_FOLDER,
+    UPSTREAM_NGINX_TEMPLATE,
+    UPSTREAMS_FOLDER,
 )
-
+from proxy.helper import process_template
 
 logger = logging.getLogger(__name__)
 docker_client = docker.DockerClient()
@@ -91,13 +90,23 @@ def generate_nginx_configs(schains_endpoints: list) -> None:
         if not schain_endpoints or len(schain_endpoints['chain_info']['http_endpoints']) == 0:
             logger.warning(f'No endpoints found, skipping config generation for {name}')
             continue
+
+        short_alias = None
+        if (
+            'chain_metadata' in schain_endpoints
+            and schain_endpoints['chain_metadata'] is not None
+            and 'shortAlias' in schain_endpoints['chain_metadata']
+        ):
+            short_alias = schain_endpoints['chain_metadata']['shortAlias']
+
         logger.info(f'Processing template for {name}...')
-        process_nginx_config_template(schain_endpoints['chain_info'])
+        process_nginx_config_template(schain_endpoints['chain_info'], short_alias)
 
 
-def process_nginx_config_template(chain_info: dict) -> None:
+def process_nginx_config_template(chain_info: dict, short_alias: str | None) -> None:
     chain_dest = os.path.join(TMP_CHAINS_FOLDER, f'{chain_info["schain_name"]}.conf')
     upstream_dest = os.path.join(TMP_UPSTREAMS_FOLDER, f'{chain_info["schain_name"]}.conf')
+    chain_info['short_alias'] = short_alias
     process_template(SCHAIN_NGINX_TEMPLATE, chain_dest, chain_info)
     process_template(UPSTREAM_NGINX_TEMPLATE, upstream_dest, chain_info)
 

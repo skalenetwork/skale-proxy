@@ -18,8 +18,10 @@
 #   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
+
 from web3 import Web3
-from src.config import ENDPOINT, GAS_ESTIMATION_ITERATIONS, BLOCK_SAMPLING
+
+from src.config import BLOCK_SAMPLING, ENDPOINT, GAS_ESTIMATION_ITERATIONS
 
 logger = logging.getLogger(__name__)
 

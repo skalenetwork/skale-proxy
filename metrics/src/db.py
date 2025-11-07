@@ -19,14 +19,14 @@
 
 import logging
 from datetime import date, timedelta
-from typing import List, Dict, Any
 from decimal import Decimal
+from typing import Any, Dict, List
 
-from peewee import fn, IntegrityError, DoesNotExist
+from peewee import DoesNotExist, IntegrityError, fn
 
-from src.models import db, Address, TransactionCount
-from src.config import TRANSACTION_COUNT_FIELD, BACKFILL_DB_DAYS
+from src.config import BACKFILL_DB_DAYS, TRANSACTION_COUNT_FIELD
 from src.explorer import get_current_total_transactions
+from src.models import Address, TransactionCount, db
 
 logger = logging.getLogger(__name__)
 
@@ -44,9 +44,16 @@ async def bootstrap_db(session, apps_data: Dict[str, Dict[str, List[str]]]) -> N
                 for address in addresses:
                     logger.info(f'Bootstrapping data for {address} on {chain_name}...')
                     addr = Address.create(chain_name=chain_name, address=address, app_name=app_name)
-                    total_transactions = await get_current_total_transactions(
-                        session, chain_name, address
-                    )
+                    try:
+                        total_transactions = await get_current_total_transactions(
+                            session, chain_name, address
+                        )
+                    except Exception as e:
+                        logger.error(
+                            f'Failed to get transaction count for {address} on {chain_name}: '
+                            f'{e}. Skipping.'
+                        )
+                        continue
                     for day in range(BACKFILL_DB_DAYS):
                         current_date = thirty_days_ago + timedelta(days=day)
                         try:

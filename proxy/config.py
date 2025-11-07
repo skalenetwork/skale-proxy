@@ -25,7 +25,8 @@ PROJECT_PATH = os.path.join(DIR_PATH, os.pardir)
 ENDPOINT = os.environ['ETH_ENDPOINT']
 PORTS_PER_SCHAIN = 64
 
-MONITOR_INTERVAL = os.getenv('MONITOR_INTERVAL', 10 * 60)
+MONITOR_INTERVAL = int(os.getenv('MONITOR_INTERVAL', 10 * 60))
+ERROR_RETRY_INTERVAL = int(os.getenv('ERROR_RETRY_INTERVAL', 30))
 
 HEARTBEAT_URL = os.getenv('HEARTBEAT_URL')
 
@@ -55,3 +56,5 @@ NGINX_CONTAINER_NAME = 'proxy_nginx'
 CONTAINER_RUNNING_STATUS = 'running'
 
 ALLOWED_TIMESTAMP_DIFF = 300
+
+GITHUB_RAW_URL = 'https://raw.githubusercontent.com'

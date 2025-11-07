@@ -19,9 +19,9 @@
 
 from web3.contract import Contract
 
-from proxy.skaled_ports import SkaledPorts
 from proxy.config import PORTS_PER_SCHAIN
 from proxy.helper import ip_from_bytes
+from proxy.skaled_ports import SkaledPorts
 
 
 def get_node_info(

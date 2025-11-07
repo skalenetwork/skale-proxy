@@ -17,32 +17,33 @@
 #   You should have received a copy of the GNU Affero General Public License
 #   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import asyncio
 import json
 import logging
-import asyncio
+from datetime import date, datetime, timedelta
+from typing import Dict, List, Optional, Tuple
+
 import aiohttp
-from datetime import datetime, date, timedelta
-from typing import Tuple, Optional, Dict, List
 from aiohttp import ClientError, ClientSession
 
-from src.explorer import get_address_counters_url, get_chain_stats
-from src.gas import calc_avg_gas_price
-from src.db import update_transaction_counts, get_address_transaction_counts
-from src.utils import transform_to_dict, decimal_default
 from src.config import (
-    METRICS_FILEPATH,
-    API_ERROR_TIMEOUT,
     API_ERROR_RETRIES,
+    API_ERROR_TIMEOUT,
     GITHUB_RAW_URL,
+    METRICS_FILEPATH,
     OFFCHAIN_KEY,
 )
+from src.db import get_address_transaction_counts, update_transaction_counts
+from src.explorer import get_address_counters_url, get_chain_stats
+from src.gas import calc_avg_gas_price
 from src.metrics_types import (
     AddressCounter,
     AddressCountersMap,
-    MetricsData,
-    ChainMetrics,
     AddressType,
+    ChainMetrics,
+    MetricsData,
 )
+from src.utils import decimal_default, transform_to_dict
 
 logger = logging.getLogger(__name__)
 
@@ -179,20 +180,28 @@ async def collect_metrics(network_name: str) -> MetricsData:
         metrics: Dict[str, ChainMetrics] = {}
 
         for chain_name, chain_info in metadata.items():
+            logger.info(f'Collecting metrics for chain {chain_name}...')
             if chain_name == OFFCHAIN_KEY:
                 continue
-            chain_stats = await get_chain_stats(session, network_name, chain_name)
-            apps_counters = None
+            try:
+                chain_stats = await get_chain_stats(session, network_name, chain_name)
+                if chain_stats is None:
+                    logger.warning(f'No chain stats available for {chain_name}. Skipping.')
+                    continue
 
-            if 'apps' in chain_info:
-                apps_counters = await fetch_counters_for_apps(
-                    session, chain_info, network_name, chain_name
-                )
+                apps_counters = None
+                if 'apps' in chain_info:
+                    apps_counters = await fetch_counters_for_apps(
+                        session, chain_info, network_name, chain_name
+                    )
 
-            metrics[chain_name] = {
-                'chain_stats': chain_stats,
-                'apps_counters': transform_to_dict(apps_counters),
-            }
+                metrics[chain_name] = {
+                    'chain_stats': chain_stats,
+                    'apps_counters': transform_to_dict(apps_counters),
+                }
+            except Exception as e:
+                logger.exception(f'Error collecting metrics for chain {chain_name}: {e}')
+                continue
 
         data: MetricsData = {
             'metrics': metrics,
