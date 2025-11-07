@@ -24,6 +24,7 @@ from time import sleep
 from proxy.config import (
     CHAINS_INFO_FILEPATH,
     ENDPOINT,
+    ERROR_RETRY_INTERVAL,
     HEARTBEAT_URL,
     MONITOR_INTERVAL,
     SM_ABI_FILEPATH,
@@ -47,13 +48,17 @@ def main():
     Path(TMP_UPSTREAMS_FOLDER).mkdir(parents=True, exist_ok=True)
 
     while True:
-        logger.info('Collecting endpoints list')
-        schains_endpoints = generate_endpoints(ENDPOINT, SM_ABI_FILEPATH)
-        write_json(CHAINS_INFO_FILEPATH, schains_endpoints)
-        update_nginx_configs(schains_endpoints)
-        send_heartbeat(HEARTBEAT_URL)
-        logger.info(f'Proxy iteration done, sleeping for {MONITOR_INTERVAL}s...')
-        sleep(MONITOR_INTERVAL)
+        try:
+            logger.info('Collecting endpoints list')
+            schains_endpoints = generate_endpoints(ENDPOINT, SM_ABI_FILEPATH)
+            write_json(CHAINS_INFO_FILEPATH, schains_endpoints)
+            update_nginx_configs(schains_endpoints)
+            send_heartbeat(HEARTBEAT_URL)
+            logger.info(f'Proxy iteration done, sleeping for {MONITOR_INTERVAL}s...')
+            sleep(MONITOR_INTERVAL)
+        except Exception as e:
+            logger.exception(f'Error in main loop: {e}', exc_info=True)
+            sleep(ERROR_RETRY_INTERVAL)
 
 
 if __name__ == '__main__':

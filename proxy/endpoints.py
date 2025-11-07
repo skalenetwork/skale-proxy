@@ -43,6 +43,10 @@ URL_PREFIXES = {
 }
 
 
+class ChainsMetadataDownloadError(Exception):
+    """Raised when chains metadata cannot be downloaded."""
+
+
 class ChainInfo:
     def __init__(self, schain_name: str, nodes: list):
         self.schain_name = schain_name
@@ -87,14 +91,23 @@ class ChainInfo:
 
 def download_metadata(network_name: str) -> dict | None:
     """Download and parse network metadata."""
-    url = f'{GITHUB_RAW_URL}/skalenetwork/skale-network/master/metadata/{network_name}/chains.json'
-    try:
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-        return response.json()
-    except Exception as e:
-        logger.error(f'Failed to download metadata from {url}: {e}')
-        return None
+    url = f'{GITHUB_RAW_URL}/skalenetworkk/skale-network/master/metadata/{network_name}/chains.json'
+    max_retries = 5
+    for attempt in range(max_retries):
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            if attempt < max_retries - 1:
+                logger.warning(
+                    f'Failed to download metadata from {url} '
+                    f'(attempt {attempt + 1}/{max_retries}): {e}'
+                )
+            else:
+                raise ChainsMetadataDownloadError(e)
+
+    return None
 
 
 def url_ok(url) -> bool:
@@ -178,7 +191,7 @@ def generate_endpoints_for_schain(
     }
 
 
-def init_contracts(web3: Web3, sm_abi: str):
+def init_contracts(web3: Web3, sm_abi: dict):
     schains_internal_contract = web3.eth.contract(
         address=sm_abi['schains_internal_address'], abi=sm_abi['schains_internal_abi']
     )
