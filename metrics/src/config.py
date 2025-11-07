@@ -21,7 +21,7 @@ import os
 
 ERROR_TIMEOUT = os.getenv('MONITOR_INTERVAL', 60)
 MONITOR_INTERVAL = os.getenv('MONITOR_INTERVAL', 10800)
-NETWORK_NAME = os.getenv('NETWORK_NAME', 'mainnet') or 'mainnet'
+NETWORK_NAME = os.getenv('NETWORK_NAME', 'mainnet')
 ENDPOINT = os.environ['ETH_ENDPOINT']
 
 PROXY_ENDPOINTS = {

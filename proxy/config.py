@@ -58,3 +58,4 @@ CONTAINER_RUNNING_STATUS = 'running'
 ALLOWED_TIMESTAMP_DIFF = 300
 
 GITHUB_RAW_URL = 'https://raw.githubusercontent.com'
+NETWORK_NAME = os.getenv('NETWORK_NAME', 'mainnet')
