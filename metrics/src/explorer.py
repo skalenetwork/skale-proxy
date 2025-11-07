@@ -20,6 +20,8 @@
 import logging
 from typing import Any
 
+import aiohttp
+
 from src.config import BASE_EXPLORER_URLS, HTTPS_PREFIX, NETWORK_NAME
 
 logger = logging.getLogger(__name__)
@@ -48,6 +50,7 @@ def get_address_counters_url(network: str, chain_name: str, address: str) -> str
 
 async def get_current_total_transactions(session, chain_name: str, address: str) -> int:
     url = get_address_counters_url(NETWORK_NAME, chain_name, address)
-    async with session.get(url) as response:
+    timeout = aiohttp.ClientTimeout(total=10)
+    async with session.get(url, timeout=timeout) as response:
         data = await response.json()
         return int(data.get('transactions_count', 0))
