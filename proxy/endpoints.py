@@ -92,7 +92,7 @@ class ChainInfo:
 
 def download_metadata(network_name: str) -> dict | None:
     """Download and parse network metadata."""
-    url = f'{GITHUB_RAW_URL}/skalenetworkk/skale-network/master/metadata/{network_name}/chains.json'
+    url = f'{GITHUB_RAW_URL}/skalenetwork/skale-network/master/metadata/{network_name}/chains.json'
     max_retries = 5
     for attempt in range(max_retries):
         try:
