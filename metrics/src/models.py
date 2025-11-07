@@ -18,9 +18,9 @@
 #   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
-from playhouse.pool import PooledMySQLDatabase
-from peewee import Model, CharField, ForeignKeyField, DateField, IntegerField
 
+from peewee import CharField, DateField, ForeignKeyField, IntegerField, Model
+from playhouse.pool import PooledMySQLDatabase
 
 db = PooledMySQLDatabase(
     os.getenv('MYSQL_DATABASE'),

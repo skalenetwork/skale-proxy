@@ -17,12 +17,11 @@
 #   You should have received a copy of the GNU Affero General Public License
 #   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import os
-import sys
 import logging
 import logging.handlers as py_handlers
+import os
+import sys
 from logging import Formatter, StreamHandler
-
 
 LOG_FORMAT = '[%(asctime)s %(levelname)s] %(name)s:%(lineno)d - %(threadName)s - %(message)s'
 LOG_FILEPATH = os.path.join(os.getcwd(), 'portal-metrics.log')

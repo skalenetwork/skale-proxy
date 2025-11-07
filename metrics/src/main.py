@@ -17,26 +17,27 @@
 #   You should have received a copy of the GNU Affero General Public License
 #   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import sys
 import asyncio
-import aiohttp
 import logging
-from time import sleep
+import sys
 from datetime import datetime
+from time import sleep
 
-from src.logs import init_default_logger
+import aiohttp
+
 from src.collector import collect_metrics, download_metadata
 from src.config import (
-    NETWORK_NAME,
-    PROXY_ENDPOINTS,
+    DB_CONNECTION_INTERVAL,
+    DB_CONNECTION_RETRIES,
     METRICS_CHECK_INTERVAL,
     METRICS_ERROR_CHECK_INTERVAL,
-    DB_CONNECTION_RETRIES,
-    DB_CONNECTION_INTERVAL,
+    NETWORK_NAME,
     OFFCHAIN_KEY,
+    PROXY_ENDPOINTS,
 )
-from src.models import db, Address, TransactionCount
 from src.db import bootstrap_db
+from src.logs import init_default_logger
+from src.models import Address, TransactionCount, db
 
 logger = logging.getLogger(__name__)
 

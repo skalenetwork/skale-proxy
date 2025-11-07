@@ -19,14 +19,14 @@
 
 import logging
 from datetime import date, timedelta
-from typing import List, Dict, Any
 from decimal import Decimal
+from typing import Any, Dict, List
 
-from peewee import fn, IntegrityError, DoesNotExist
+from peewee import DoesNotExist, IntegrityError, fn
 
-from src.models import db, Address, TransactionCount
-from src.config import TRANSACTION_COUNT_FIELD, BACKFILL_DB_DAYS
+from src.config import BACKFILL_DB_DAYS, TRANSACTION_COUNT_FIELD
 from src.explorer import get_current_total_transactions
+from src.models import Address, TransactionCount, db
 
 logger = logging.getLogger(__name__)
 
