@@ -13,6 +13,9 @@ jobs:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       MANAGER_TAG: "1.9.3-beta.0"
     steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:

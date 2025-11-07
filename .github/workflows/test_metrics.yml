@@ -2,7 +2,7 @@ name: Test metrics
 on: [push, pull_request]
 
 jobs:
-  test_proxy:
+  test_metrics:
     defaults:
       run:
         working-directory: metrics
@@ -31,10 +31,10 @@ jobs:
       - name: Install python dependencies
         run: uv sync --all-extras
       - name: Lint with ruff
-        run: ruff check src/
+        run: uv run ruff check src/
       - name: Run MySQL container
         run: docker compose up -d db
       - name: Prepare database
-        run: python tests/prepare_db.py
+        run: uv run python tests/prepare_db.py
       - name: Run metrics tests
-        run: pytest tests/
+        run: uv run pytest tests/
