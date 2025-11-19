@@ -19,22 +19,20 @@
 
 import json
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from time import sleep
 
 import requests
 from Crypto.Hash import keccak
-from web3 import HTTPProvider, Web3
+from skale import SkaleManager
+from skale.dataclasses.node_info import NodeInfo
+from skale.schain_config.ports_allocation import get_schain_base_port_on_node
+from skale.types.node import NodeId
+from skale.types.schain import SchainHash, SchainName
+from skale.utils.helper import ip_from_bytes
 
-from proxy.config import (
-    ALLOWED_TIMESTAMP_DIFF,
-    ENDPOINT,
-    GITHUB_RAW_URL,
-    NETWORK_NAME,
-    SM_ABI_FILEPATH,
-)
-from proxy.helper import make_rpc_call, read_json
-from proxy.node_info import get_node_info
-from proxy.schain_options import parse_schain_options
+from proxy.config import ALLOWED_TIMESTAMP_DIFF, GITHUB_RAW_URL, get_config
+from proxy.helper import init_default_logger, make_rpc_call
 from proxy.str_formatters import arguments_list_string
 
 logger = logging.getLogger(__name__)
@@ -45,7 +43,6 @@ URL_PREFIXES = {
     'https': 'https://',
     'ws': 'ws://',
     'wss': 'wss://',
-    'infoHttp': 'http://',
 }
 
 
@@ -54,7 +51,7 @@ class ChainsMetadataDownloadError(Exception):
 
 
 class ChainInfo:
-    def __init__(self, schain_name: str, nodes: list):
+    def __init__(self, schain_name: SchainName, nodes: list):
         self.schain_name = schain_name
         self.chain_id = schain_name_to_network_id(schain_name)
         self.http_endpoints = []
@@ -73,7 +70,7 @@ class ChainInfo:
         for node in nodes:
             http_endpoint = node['http_endpoint_domain']
             if not url_ok(http_endpoint):
-                logger.warning(f'{http_endpoint} is not accesible, removing from the list')
+                logger.warning(f'{http_endpoint} is not accessible, removing from the list')
                 continue
             if is_node_out_of_sync(node['block_ts'], max_ts):
                 logger.warning(
@@ -146,11 +143,11 @@ def schain_name_to_id(name: str) -> str:
     return '0x' + keccak_hash.hexdigest()
 
 
-def schain_name_to_network_id(raw_schain_struct: list) -> str:
-    return schain_name_to_id(raw_schain_struct[0])[:15]
+def schain_name_to_network_id(schain_name: SchainName) -> str:
+    return schain_name_to_id(schain_name)[:15]
 
 
-def _compose_endpoints(node_dict, endpoint_type):
+def _compose_endpoints(node_dict: dict, endpoint_type: str):
     for prefix_name in URL_PREFIXES:
         prefix = URL_PREFIXES[prefix_name]
         port = node_dict[f'{prefix_name}RpcPort']
@@ -158,97 +155,99 @@ def _compose_endpoints(node_dict, endpoint_type):
         node_dict[key_name] = f'{prefix}{node_dict[endpoint_type]}:{port}'
 
 
+def get_node_info(
+    skale: SkaleManager,
+    schain_hash: SchainHash,
+    node_id: NodeId,
+) -> dict:
+    node = skale.nodes.get(node_id)
+    schain_hashes = skale.schains_internal.get_schain_hashes_for_node(node_id)
+    base_port = get_schain_base_port_on_node(schain_hashes, schain_hash, node['port'])
+    node_dict = NodeInfo(node_id=node_id, name=node['name'], base_port=base_port).to_dict()
+    node_dict['ip'] = ip_from_bytes(node['ip'])
+    node_dict['domain'] = node['domain_name']
+    return node_dict
+
+
 def generate_endpoints_for_schain(
-    schains_internal_contract, schains_contract, nodes_contract, schain_hash, chains_metadata
+    skale: SkaleManager, schain_hash: SchainHash, chains_metadata: dict | None
 ):
-    """Generates endpoints list for a given SKALE chain"""
-    schain = schains_internal_contract.functions.schains(schain_hash).call()
-    schain_options_raw = schains_contract.functions.getOptions(schain_hash).call()
+    schain = skale.schains.get(schain_hash)
+    logger.info(f'Going to generate endpoints for sChain: {schain.name}')
 
-    schain_options = parse_schain_options(raw_options=schain_options_raw)
-
-    schain.append(schain_options.multitransaction_mode)
-    schain.append(schain_options.threshold_encryption)
-
-    logger.info(f'Going to generate endpoints for sChain: {schain[0]}')
-
-    node_ids = schains_internal_contract.functions.getNodesInGroup(schain_hash).call()
+    node_ids = skale.schains_internal.get_node_ids_for_schain(schain.name)
     nodes = []
     for node_id in node_ids:
         node = get_node_info(
+            skale=skale,
             schain_hash=schain_hash,
             node_id=node_id,
-            nodes_contract=nodes_contract,
-            schains_internal_contract=schains_internal_contract,
         )
         _compose_endpoints(node, endpoint_type='ip')
         _compose_endpoints(node, endpoint_type='domain')
         nodes.append(node)
 
     chain_metadata = None
-    if chains_metadata and schain[0] in chains_metadata:
-        chain_metadata = chains_metadata[schain[0]]
+    if chains_metadata and schain.name in chains_metadata:
+        chain_metadata = chains_metadata[schain.name]
         if 'apps' in chain_metadata:
             chain_metadata.pop('apps')
     return {
-        'schain': schain,
+        'schain': schain.to_dict(),
         'nodes': nodes,
-        'chain_info': ChainInfo(schain[0], nodes).to_dict(),
+        'chain_info': ChainInfo(schain.name, nodes).to_dict(),
         'chain_metadata': chain_metadata,
     }
 
 
-def init_contracts(web3: Web3, sm_abi: dict):
-    schains_internal_contract = web3.eth.contract(
-        address=sm_abi['schains_internal_address'], abi=sm_abi['schains_internal_abi']
-    )
-    schains_contract = web3.eth.contract(
-        address=sm_abi['schains_address'], abi=sm_abi['schains_abi']
-    )
-    nodes_contract = web3.eth.contract(address=sm_abi['nodes_address'], abi=sm_abi['nodes_abi'])
-    return schains_internal_contract, schains_contract, nodes_contract
-
-
-def generate_endpoints(endpoint: str, abi_filepath: str) -> list:
+def generate_endpoints(endpoint: str, manager_contracts: str, network_name: str) -> list:
     """Main function that generates endpoints for all SKALE Chains on the given network"""
-    provider = HTTPProvider(endpoint)
-    web3 = Web3(provider)
-    sm_abi = read_json(abi_filepath)
 
-    chains_metadata = download_metadata(network_name=NETWORK_NAME)
-
-    schains_internal_contract, schains_contract, nodes_contract = init_contracts(
-        web3=web3, sm_abi=sm_abi
-    )
+    chains_metadata = download_metadata(network_name=network_name)
+    skale = SkaleManager(endpoint, manager_contracts)
 
     logger.info(
         arguments_list_string(
             {
-                'nodes': nodes_contract.address,
-                'schains_internal': schains_internal_contract.address,
-                'schains': schains_contract.address,
+                'nodes': skale.nodes.address,
+                'schains_internal': skale.schains_internal.address,
+                'schains': skale.schains.address,
             },
             'Contracts inited',
         )
     )
 
-    schain_hashes = schains_internal_contract.functions.getSchains().call()
+    schain_hashes = skale.schains_internal.get_all_schains_hashes()
 
     logger.info(f'Number of sChains: {len(schain_hashes)}')
-    endpoints = [
-        generate_endpoints_for_schain(
-            schains_internal_contract,
-            schains_contract,
-            nodes_contract,
-            schain_hash,
-            chains_metadata,
-        )
-        for schain_hash in schain_hashes
-    ]
-    endpoints = list(filter(lambda item: item is not None, endpoints))  # TODO: hotfix!
+    endpoints = []
+
+    with ThreadPoolExecutor() as executor:
+        future_to_schain_hash = {
+            executor.submit(
+                generate_endpoints_for_schain,
+                skale,
+                schain_hash,
+                chains_metadata,
+            ): schain_hash
+            for schain_hash in schain_hashes
+        }
+        for future in as_completed(future_to_schain_hash):
+            schain_hash = future_to_schain_hash[future]
+            try:
+                result = future.result()
+                if result is not None:
+                    endpoints.append(result)
+            except Exception as e:
+                logger.error(f'Failed to generate endpoints for sChain {schain_hash}: {e}')
+
     return endpoints
 
 
 if __name__ == '__main__':
-    schains_endpoints = generate_endpoints(ENDPOINT, SM_ABI_FILEPATH)
+    init_default_logger()
+    config = get_config()
+    schains_endpoints = generate_endpoints(
+        config.endpoint, config.manager_contracts, config.network_name
+    )
     print(json.dumps(schains_endpoints, indent=4))

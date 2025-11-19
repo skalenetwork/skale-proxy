@@ -19,7 +19,6 @@
 
 import json
 import logging
-import socket
 import sys
 from logging import Formatter, StreamHandler
 
@@ -29,18 +28,9 @@ from jinja2 import Environment
 from proxy.config import PROXY_LOG_FORMAT
 
 
-def read_json(path, mode='r'):
-    with open(path, mode=mode, encoding='utf-8') as data_file:
-        return json.load(data_file)
-
-
 def write_json(path, content):
     with open(path, 'w') as outfile:
         json.dump(content, outfile, indent=4)
-
-
-def ip_from_bytes(bytes):
-    return socket.inet_ntoa(bytes)
 
 
 def process_template(source, destination, data):

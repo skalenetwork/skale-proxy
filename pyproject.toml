@@ -3,7 +3,8 @@ name = "skale-proxy"
 version = "2.2.0"
 requires-python = ">=3.13"
 dependencies = [
-    "web3==7.14.0",
+    "skale.py==7.10dev1",
+    "pydantic-settings==2.12.0",
     "Jinja2==3.1.6",
     "colorful==0.5.8",
     "docker==7.1.0",

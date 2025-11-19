@@ -19,25 +19,38 @@
 
 import os
 
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Config(BaseSettings):
+    endpoint: str
+    manager_contracts: str
+    network_name: str
+
+    heartbeat_url: str | None = None
+
+    monitor_interval: int = 10 * 60
+    error_retry_interval: int = 30
+
+    model_config = SettingsConfigDict(
+        env_file='.env',
+        env_file_encoding='utf-8',
+        case_sensitive=False,
+        extra='ignore',
+    )
+
+
+def get_config() -> Config:
+    return Config()  # type: ignore[call-arg]
+
+
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 PROJECT_PATH = os.path.join(DIR_PATH, os.pardir)
-
-ENDPOINT = os.environ['ETH_ENDPOINT']
-PORTS_PER_SCHAIN = 64
-
-MONITOR_INTERVAL = int(os.getenv('MONITOR_INTERVAL', 10 * 60))
-ERROR_RETRY_INTERVAL = int(os.getenv('ERROR_RETRY_INTERVAL', 30))
-
-HEARTBEAT_URL = os.getenv('HEARTBEAT_URL')
 
 NGINX_WWW_FOLDER = os.path.join(PROJECT_PATH, 'www')
 CHAINS_INFO_FILEPATH = os.path.join(NGINX_WWW_FOLDER, 'chains.json')
 
 DATA_FOLDER = os.path.join(PROJECT_PATH, 'data')
-
-SM_ABI_DEFAULT_FILEPATH = os.path.join(DATA_FOLDER, 'abi.json')
-SM_ABI_FILEPATH = os.getenv('SM_ABI_FILEPATH', SM_ABI_DEFAULT_FILEPATH)
-
 TEMPLATES_FOLDER = os.path.join(PROJECT_PATH, 'templates')
 
 SCHAIN_NGINX_TEMPLATE = os.path.join(TEMPLATES_FOLDER, 'chain.conf.j2')
@@ -58,4 +71,3 @@ CONTAINER_RUNNING_STATUS = 'running'
 ALLOWED_TIMESTAMP_DIFF = 300
 
 GITHUB_RAW_URL = 'https://raw.githubusercontent.com'
-NETWORK_NAME = os.getenv('NETWORK_NAME', 'mainnet')
