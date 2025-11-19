@@ -21,16 +21,7 @@ import logging
 from pathlib import Path
 from time import sleep
 
-from proxy.config import (
-    CHAINS_INFO_FILEPATH,
-    ENDPOINT,
-    ERROR_RETRY_INTERVAL,
-    HEARTBEAT_URL,
-    MONITOR_INTERVAL,
-    SM_ABI_FILEPATH,
-    TMP_CHAINS_FOLDER,
-    TMP_UPSTREAMS_FOLDER,
-)
+from proxy.config import CHAINS_INFO_FILEPATH, TMP_CHAINS_FOLDER, TMP_UPSTREAMS_FOLDER, get_config
 from proxy.endpoints import generate_endpoints
 from proxy.heartbeat import send_heartbeat
 from proxy.helper import init_default_logger, write_json
@@ -42,7 +33,8 @@ logger = logging.getLogger(__name__)
 
 def main():
     init_default_logger()
-    logger.info(arguments_list_string({'Endpoint': ENDPOINT}, 'Starting SKALE Proxy server'))
+    config = get_config()
+    logger.info(arguments_list_string({'Endpoint': config.endpoint}, 'Starting SKALE Proxy server'))
 
     Path(TMP_CHAINS_FOLDER).mkdir(parents=True, exist_ok=True)
     Path(TMP_UPSTREAMS_FOLDER).mkdir(parents=True, exist_ok=True)
@@ -50,15 +42,17 @@ def main():
     while True:
         try:
             logger.info('Collecting endpoints list')
-            schains_endpoints = generate_endpoints(ENDPOINT, SM_ABI_FILEPATH)
+            schains_endpoints = generate_endpoints(
+                config.endpoint, config.manager_contracts, config.network_name
+            )
             write_json(CHAINS_INFO_FILEPATH, schains_endpoints)
             update_nginx_configs(schains_endpoints)
-            send_heartbeat(HEARTBEAT_URL)
-            logger.info(f'Proxy iteration done, sleeping for {MONITOR_INTERVAL}s...')
-            sleep(MONITOR_INTERVAL)
+            send_heartbeat(config.heartbeat_url)
+            logger.info(f'Proxy iteration done, sleeping for {config.monitor_interval}s...')
+            sleep(config.monitor_interval)
         except Exception as e:
             logger.exception(f'Error in main loop: {e}', exc_info=True)
-            sleep(ERROR_RETRY_INTERVAL)
+            sleep(config.error_retry_interval)
 
 
 if __name__ == '__main__':
