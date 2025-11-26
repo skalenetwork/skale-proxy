@@ -9,13 +9,13 @@ JSON-RPC endpoints for SKALE chains. It is based on NGINX.
 
 ### Prerequisites
 
-- Docker
-- docker-compose
+* Docker
+* docker-compose
 
 ### Repo setup
 
 1. Clone repo & all submodules
-2. Put `abi.json`, `server.crt` and `server.key`files in `data` folder
+2. Put `server.crt` and `server.key`files in `data` folder
 3. Export all required environment variables (see below)
 4. Run `scripts/run_proxy.sh`
 
@@ -33,12 +33,14 @@ ruff format src/
 
 #### Required environment variables
 
-- `ETH_ENDPOINT` - endpoint of the Ethereum network where `skale-manager` contracts are deployed
+* `ENDPOINT` - endpoint of the Ethereum network where `skale-manager` contracts are deployed
+* `MANAGER_CONTRACTS` - address or alias of the `skale-manager` contracts
+* `NETWORK_NAME` - name of the SKALE network (e.g., `mainnet`, `testnet`, etc.)
 
 #### Optional environment variables
 
-- `HEARTBEAT_URL` - URL for healthcheck endpoint (optional)
-- `USE_ALB` - Set to `True` if the proxy is deployed behind a load balancer (like AWS ALB) that sets the `X-Forwarded-For` header. This configures Nginx to correctly identify the client's real IP address for rate limiting. Defaults to `False` if not set.
+* `HEARTBEAT_URL` - URL for healthcheck endpoint (optional)
+* `USE_ALB` - Set to `True` if the proxy is deployed behind a load balancer (like AWS ALB) that sets the `X-Forwarded-For` header. This configures Nginx to correctly identify the client's real IP address for rate limiting. Defaults to `False` if not set.
 
 ## License
 
