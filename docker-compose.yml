@@ -6,7 +6,7 @@ x-logging: &logging
 
 services:
   nginx:
-    image: nginx:1.30.5@sha256:b972f831f200b19ef0767938224f9711e74cd783718738cd7405d5cabf75c442
+    image: nginx:1.30.6@sha256:66b50d24288dba67f3d000b31223daefc4868c58d29aaacb6a4ff9771597b5eb
     network_mode: host
     restart: unless-stopped
     ulimits:

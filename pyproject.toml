@@ -4,14 +4,14 @@ version = "3.0.0"
 requires-python = ">=3.14"
 dependencies = [
     "requests==2.34.2",
-    "skale.py==7.14.dev4",
+    "skale.py==8.0dev0",
 ]
 
 [dependency-groups]
 dev = [
-    "mypy==2.3.1",
-    "pytest==9.1.1",
-    "ruff==0.16.9",
+    "mypy==2.4.0",
+    "pytest==9.2.0",
+    "ruff==0.17.3",
 ]
 
 [tool.ruff]

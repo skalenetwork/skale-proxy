@@ -149,14 +149,17 @@ def fetch_metadata(session: requests.Session, network: str) -> Metadata | None:
 
 
 def block_field(session: requests.Session, url: str, field: str) -> int | None:
-    payload = {
-        'jsonrpc': '2.0',
-        'id': 1,
-        'method': 'eth_getBlockByNumber',
-        'params': ['latest', False],
-    }
     try:
-        response = session.post(url, json=payload, timeout=(3, 5))
+        response = session.post(
+            url,
+            json={
+                'jsonrpc': '2.0',
+                'id': 1,
+                'method': 'eth_getBlockByNumber',
+                'params': ['latest', False],
+            },
+            timeout=(3, 5),
+        )
         response.raise_for_status()
         return int(response.json()['result'][field], 16)
     except requests.RequestException, ValueError, LookupError, TypeError:
