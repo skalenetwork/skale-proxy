@@ -1,51 +1,34 @@
 # SKALE Proxy
 
-[![Discord](https://img.shields.io/discord/534485763354787851.svg)](https://discord.gg/vvUtWJB)
+Public JSON-RPC, WebSocket and filestorage endpoints for SKALE chains, load-balanced by nginx.
 
-SKALE Proxy is high performance, easy-to-run public service that provides proxied and load-balanced
-JSON-RPC endpoints for SKALE chains. It is based on NGINX.
+- `nginx`: the official image with a static config. Serves `/v1/<chain>`, `/v1/ws/<chain>`, `/fs/<chain>` and `/files/`.
+- `proxy`: every 10 minutes discovers chains from `skale-manager`, probes nodes, writes `conf/*.conf` and `www/chains.json`, and reloads nginx when the config changes.
+- `metrics` (`COMPOSE_PROFILES=metrics`): explorer counters and stats into SQLite, published as `/files/metrics.json`.
 
-## Usage guide
+## Environment
 
-### Prerequisites
+| Variable | Service | Required | Description |
+|---|---|---|---|
+| `ENDPOINT` | proxy | yes | Ethereum RPC where `skale-manager` is deployed |
+| `MANAGER_CONTRACTS` | proxy | yes | `skale-manager` address or alias |
+| `NETWORK_NAME` | proxy, metrics | yes | SKALE network name; metrics supports `mainnet`, `testnet`, `legacy` and `regression` |
+| `USE_ALB` | nginx | yes | `True` behind an AWS ALB (trusts `X-Forwarded-For` from RFC 1918 ranges), `False` otherwise |
+| `HEARTBEAT_URL` | proxy | no | URL requested after each complete discovery |
+| `ETH_ENDPOINT` | metrics | with `metrics` | Ethereum RPC for the gas price |
 
-* Docker
-* docker-compose
+## Run
 
-### Repo setup
-
-1. Clone repo & all submodules
-2. Put `server.crt` and `server.key`files in `data` folder
-3. Export all required environment variables (see below)
-4. Run `scripts/run_proxy.sh`
-
-#### Pre-commit hook
-
-```bash
-ruff check --config metrics/pyproject.toml metrics/src/
-```
-
-#### Format code
+Put `server.crt` and `server.key` in `data/`, export the environment, then:
 
 ```bash
-ruff format src/
+docker compose up -d --build --remove-orphans
 ```
 
-#### Required environment variables
+## Develop
 
-* `ENDPOINT` - endpoint of the Ethereum network where `skale-manager` contracts are deployed
-* `MANAGER_CONTRACTS` - address or alias of the `skale-manager` contracts
-* `NETWORK_NAME` - name of the SKALE network (e.g., `mainnet`, `testnet`, etc.)
-
-#### Optional environment variables
-
-* `HEARTBEAT_URL` - URL for healthcheck endpoint (optional)
-* `USE_ALB` - Set to `True` if the proxy is deployed behind a load balancer (like AWS ALB) that sets the `X-Forwarded-For` header. This configures Nginx to correctly identify the client's real IP address for rate limiting. Defaults to `False` if not set.
+`uv sync --locked`, then the checks in `.github/workflows/ci.yml`: ruff, mypy, pytest and `nginx -t` against `tests/golden`.
 
 ## License
 
-[![License](https://img.shields.io/github/license/skalenetwork/skale-proxy.svg)](LICENSE)
-
-All contributions to SKALE Proxy are made under the [GNU Affero General Public License v3](https://www.gnu.org/licenses/agpl-3.0.en.html). See [LICENSE](LICENSE).
-
-Copyright (C) 2022-Present SKALE Labs.
+[GNU Affero General Public License v3](LICENSE). Copyright (C) 2022-Present SKALE Labs.

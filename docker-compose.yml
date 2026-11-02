@@ -1,88 +1,54 @@
-services:
-  skale-proxy:
-    environment:
-      ENDPOINT: ${ENDPOINT}
-      HEARTBEAT_URL: ${HEARTBEAT_URL}
-      NETWORK_NAME: ${NETWORK_NAME}
-      MANAGER_CONTRACTS: ${MANAGER_CONTRACTS}
-    image: skale-proxy:latest
-    container_name: proxy_admin
-    build:
-      context: .
-      dockerfile: Dockerfile
-    volumes:
-      - ./data:/usr/src/proxy/data
-      - ./www:/usr/src/proxy/www
-      - ./conf:/usr/src/proxy/conf/
-      - /var/run/docker.sock:/var/run/docker.sock
-    logging:
-      driver: "json-file"
-      options:
-        max-file: "5"
-        max-size: "200m"
-    restart: unless-stopped
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 100m
+    max-file: "5"
 
+services:
   nginx:
-    image: nginx:1.29.3
-    container_name: proxy_nginx
+    image: nginx:1.30.5@sha256:b972f831f200b19ef0767938224f9711e74cd783718738cd7405d5cabf75c442
     network_mode: host
+    restart: unless-stopped
+    ulimits:
+      nofile: 32768
+    environment:
+      NGINX_ENTRYPOINT_LOCAL_RESOLVERS: "1"
     volumes:
-      - ./data:/data
-      - ./www:/usr/share/nginx/www/files
       - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./conf:/etc/nginx/conf/
-    logging:
-      driver: "json-file"
-      options:
-        max-file: "200"
-        max-size: "500m"
+      - ./config/real-ip/${USE_ALB:?USE_ALB must be True or False}.conf:/etc/nginx/real-ip.conf:ro
+      - ./config/resolver.conf.template:/etc/nginx/templates/resolver.conf.template:ro
+      - ./conf:/etc/nginx/conf:ro
+      - ./data:/data:ro
+      - ./www:/usr/share/nginx/www/files:ro
+      - metrics:/srv/metrics:ro
+    logging: *logging
+
+  proxy:
+    build: .
+    pid: service:nginx
+    user: "0:0"
+    cap_drop: [ALL]
+    read_only: true
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    environment: [ENDPOINT, MANAGER_CONTRACTS, NETWORK_NAME, HEARTBEAT_URL]
+    volumes:
+      - ./conf:/app/conf
+      - ./www:/app/www
+    logging: *logging
 
   metrics:
-    environment:
-      ETH_ENDPOINT: ${ETH_ENDPOINT}
-      NETWORK_NAME: ${NETWORK_NAME}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_HOST: db
-      MYSQL_DATABASE: metrics
-    image: metrics:latest
-    container_name: metrics
-    build:
-      context: ./metrics
-      dockerfile: Dockerfile
-    volumes:
-      - ./www:/usr/src/metrics/www
-    logging:
-      driver: "json-file"
-      options:
-        max-file: "5"
-        max-size: "50m"
+    build: .
+    profiles: [metrics]
+    command: [python, -m, proxy.metrics]
+    read_only: true
+    security_opt: [no-new-privileges:true]
     restart: unless-stopped
-    depends_on:
-      - db
-    networks:
-      - proxy
-
-  db:
-    image: mysql:8.0
-    container_name: db
-    restart: always
-    environment:
-      - MYSQL_DATABASE=metrics
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    environment: [ETH_ENDPOINT, NETWORK_NAME]
     volumes:
-      - mysql_data:/var/lib/mysql
-      - ./mysql-init:/docker-entrypoint-initdb.d
-    networks:
-      - proxy
-    ports:
-      - "3306:3306"
+      - metrics:/var/lib/metrics
+      - ./www:/app/www:ro
+    logging: *logging
 
 volumes:
-  mysql_data:
-
-networks:
-  proxy:
-    driver: bridge
+  metrics:
