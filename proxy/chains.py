@@ -1,10 +1,13 @@
+import json
 import logging
-import os
-from collections.abc import Mapping
-from concurrent.futures import ThreadPoolExecutor
+import re
+from collections.abc import Iterable, Mapping
+from concurrent.futures import ThreadPoolExecutor, wait
+from contextlib import suppress
 from dataclasses import dataclass
 from functools import partial
 from pathlib import Path
+from statistics import median_low
 from typing import Any, TypedDict
 
 import requests
@@ -24,6 +27,9 @@ METADATA_URL = (
     'https://raw.githubusercontent.com/skalenetwork/skale-network/master/metadata/{}/chains.json'
 )
 MAX_LAG = 300
+MAX_BODY = 1 << 21
+PROBE_TIMEOUT = 60
+DOMAIN = re.compile(r'[A-Za-z0-9._-]{1,253}')
 
 
 @dataclass(frozen=True, slots=True)
@@ -49,10 +55,6 @@ class Chain:
     schain: dict[str, Any]
     nodes: tuple[Node, ...]
 
-    @property
-    def ids(self) -> frozenset[NodeId]:
-        return frozenset(n.id for n in self.nodes)
-
 
 @dataclass(frozen=True, slots=True)
 class NodeData:
@@ -61,27 +63,6 @@ class NodeData:
     domain: str
     port: Port
     hashes: list[SchainHash]
-
-
-class NodeRecord(TypedDict):
-    nodeID: NodeId
-    nodeName: str
-    basePort: Port
-    httpRpcPort: Port
-    httpsRpcPort: Port
-    wsRpcPort: Port
-    wssRpcPort: Port
-    ip: str
-    domain: str
-    http_endpoint_ip: str
-    https_endpoint_ip: str
-    ws_endpoint_ip: str
-    wss_endpoint_ip: str
-    http_endpoint_domain: str
-    https_endpoint_domain: str
-    ws_endpoint_domain: str
-    wss_endpoint_domain: str
-    block_ts: int
 
 
 class ChainInfo(TypedDict):
@@ -94,7 +75,7 @@ class ChainInfo(TypedDict):
 
 class ChainRecord(TypedDict):
     schain: dict[str, Any]
-    nodes: list[NodeRecord]
+    nodes: list[dict[str, Any]]
     chain_info: ChainInfo
     chain_metadata: dict[str, Any] | None
 
@@ -102,22 +83,33 @@ class ChainRecord(TypedDict):
 def atomic_write(path: Path, text: str) -> None:
     tmp = path.with_name(f'{path.name}.tmp')
     tmp.write_text(text)
-    os.replace(tmp, path)
+    tmp.replace(path)
 
 
-def node_data(skale: SkaleManager, node_id: NodeId) -> NodeData:
-    node = skale.nodes.get(node_id)
-    hashes = skale.schains_internal.schain_hashes_for_node(node_id)
-    return NodeData(
-        node['name'], ip_from_bytes(node['ip']), node['domain_name'], node['port'], hashes
-    )
+def get_schain(skale: SkaleManager, schain_hash: SchainHash) -> SchainStructure | None:
+    with suppress(UnicodeDecodeError):
+        return skale.schains.get(schain_hash)
+    logger.warning('Skipping chain %s with a non-UTF-8 name', schain_hash.hex())
+    return None
+
+
+def node_data(skale: SkaleManager, node_id: NodeId) -> NodeData | None:
+    with suppress(UnicodeDecodeError):
+        node = skale.nodes.get(node_id)
+        if DOMAIN.fullmatch(node['domain_name']):
+            hashes = skale.schains_internal.schain_hashes_for_node(node_id)
+            return NodeData(
+                node['name'], ip_from_bytes(node['ip']), node['domain_name'], node['port'], hashes
+            )
+    logger.warning('Skipping node %d with an invalid domain', node_id)
+    return None
 
 
 def build(
     schain_hash: SchainHash,
     schain: SchainStructure,
     group: list[NodeId],
-    data: Mapping[NodeId, NodeData],
+    data: Mapping[NodeId, NodeData | None],
 ) -> Chain:
     nodes = tuple(
         Node(i, d.name, d.ip, d.domain, get_schain_base_port_on_node(d.hashes, schain_hash, d.port))
@@ -127,30 +119,29 @@ def build(
     return Chain(schain.name, schain.to_dict(), nodes)
 
 
-def discover(skale: SkaleManager) -> dict[SchainHash, Chain]:
+def discover(skale: SkaleManager) -> list[Chain]:
     hashes = skale.schains_internal.all_schain_hashes()
     with ThreadPoolExecutor(8) as pool:
-        schains = list(pool.map(skale.schains.get, hashes))
+        schains = list(pool.map(partial(get_schain, skale), hashes))
         groups = list(pool.map(skale.schains_internal.node_ids_for_schain_hash, hashes))
         ids = list({i for group in groups for i in group})
         data = dict(zip(ids, pool.map(partial(node_data, skale), ids), strict=True))
-    return {h: build(h, s, g, data) for h, s, g in zip(hashes, schains, groups, strict=True)}
+    return [build(h, s, g, data) for h, s, g in zip(hashes, schains, groups, strict=True) if s]
 
 
-def fetch_metadata(session: requests.Session, network: str) -> Metadata | None:
+def get_json(session: requests.Session, url: str) -> Any:
     try:
-        response = session.get(METADATA_URL.format(network), timeout=10)
+        response = session.get(url, timeout=10)
         response.raise_for_status()
-        metadata: Metadata = response.json()
-        return metadata
+        return response.json()
     except requests.RequestException:
-        logger.warning('Metadata download failed, keeping the last good copy')
+        logger.warning('GET %s failed', url)
         return None
 
 
 def block_field(session: requests.Session, url: str, field: str) -> int | None:
     try:
-        response = session.post(
+        with session.post(
             url,
             json={
                 'jsonrpc': '2.0',
@@ -159,36 +150,41 @@ def block_field(session: requests.Session, url: str, field: str) -> int | None:
                 'params': ['latest', False],
             },
             timeout=(3, 5),
-        )
-        response.raise_for_status()
-        return int(response.json()['result'][field], 16)
-    except requests.RequestException, ValueError, LookupError, TypeError:
+            stream=True,
+        ) as response:
+            response.raise_for_status()
+            body = b''
+            for chunk in response.iter_content(1 << 16):
+                if len(body := body + chunk) > MAX_BODY:
+                    return None
+        value = int(json.loads(body)['result'][field], 16)
+        return value if value < 1 << 64 else None
+    except requests.RequestException, ValueError, LookupError, TypeError, RecursionError:
         return None
 
 
-def probe(session: requests.Session, chains: Mapping[SchainHash, Chain]) -> dict[Node, int]:
-    nodes = [n for c in chains.values() for n in c.nodes]
-    with ThreadPoolExecutor(32) as pool:
-        stamps = pool.map(lambda n: block_field(session, n.rpc_url, 'timestamp'), nodes)
+def probe(session: requests.Session, chains: Iterable[Chain]) -> dict[Node, int]:
+    nodes = [n for c in chains for n in c.nodes]
+    pool = ThreadPoolExecutor(32)
+    futures = [pool.submit(block_field, session, n.rpc_url, 'timestamp') for n in nodes]
+    done, _ = wait(futures, PROBE_TIMEOUT)
+    pool.shutdown(wait=False, cancel_futures=True)
+    stamps = [f.result() if f in done else None for f in futures]
     return {n: -1 if ts is None else ts for n, ts in zip(nodes, stamps, strict=True)}
 
 
-def healthy(chain: Chain, stamps: Mapping[Node, int]) -> frozenset[NodeId]:
-    ts = {n.id: stamps[n] for n in chain.nodes}
-    newest = max((t for t in ts.values() if t > 0), default=0)
-    return frozenset(i for i, t in ts.items() if t > 0 and newest - t <= MAX_LAG)
+def healthy(chain: Chain, stamps: Mapping[Node, int]) -> list[Node]:
+    head = median_low([stamps[n] for n in chain.nodes if stamps[n] > 0] or [0])
+    return [n for n in chain.nodes if stamps[n] > 0 and head - stamps[n] <= MAX_LAG]
 
 
-def node_record(node: Node, ts: int) -> NodeRecord:
+def node_record(node: Node, ts: int) -> dict[str, Any]:
     p = node.ports
     return {
         'nodeID': node.id,
         'nodeName': node.name,
         'basePort': node.base_port,
-        'httpRpcPort': p['httpRpcPort'],
-        'httpsRpcPort': p['httpsRpcPort'],
-        'wsRpcPort': p['wsRpcPort'],
-        'wssRpcPort': p['wssRpcPort'],
+        **p,
         'ip': node.ip,
         'domain': node.domain,
         'http_endpoint_ip': f'http://{node.ip}:{p["httpRpcPort"]}',
@@ -204,8 +200,7 @@ def node_record(node: Node, ts: int) -> NodeRecord:
 
 
 def chain_record(chain: Chain, stamps: Mapping[Node, int], metadata: Metadata) -> ChainRecord:
-    routed = healthy(chain, stamps) or chain.ids
-    nodes = [n for n in chain.nodes if n.id in routed]
+    nodes = healthy(chain, stamps) or chain.nodes
     meta = metadata.get(chain.name)
     return {
         'schain': chain.schain,

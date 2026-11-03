@@ -6,18 +6,18 @@ from pathlib import Path
 
 import requests
 from skale import SkaleManager
-from skale.types.schain import SchainHash
 
 from proxy import nginx
 from proxy.chains import (
     CHAINS_JSON,
+    METADATA_URL,
     Chain,
     ChainRecord,
     Metadata,
     atomic_write,
     chain_record,
     discover,
-    fetch_metadata,
+    get_json,
     probe,
 )
 
@@ -43,7 +43,7 @@ def main() -> None:
     network, heartbeat_url = os.environ['NETWORK_NAME'], os.environ.get('HEARTBEAT_URL')
     session = requests.Session()
     skale = SkaleManager(os.environ['ENDPOINT'], os.environ['MANAGER_CONTRACTS'])
-    chains: dict[SchainHash, Chain] = {}
+    chains: list[Chain] = []
     metadata = saved(CHAINS_JSON)
     while True:
         try:
@@ -51,10 +51,10 @@ def main() -> None:
         except Exception:
             fresh = False
             logger.exception('Discovery failed, keeping the last known chains')
-        metadata = fetch_metadata(session, network) or metadata
+        metadata = get_json(session, METADATA_URL.format(network)) or metadata
         if chains:
             stamps = probe(session, chains)
-            records = [chain_record(c, stamps, metadata) for c in chains.values()]
+            records = [chain_record(c, stamps, metadata) for c in chains]
             if nginx.apply(nginx.render(records)):
                 atomic_write(CHAINS_JSON, json.dumps(records, separators=(',', ':')))
                 if fresh and heartbeat_url:

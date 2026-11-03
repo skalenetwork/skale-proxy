@@ -11,7 +11,7 @@ from typing import Any, TypedDict
 
 import requests
 
-from proxy.chains import CHAINS_JSON, Metadata, atomic_write, block_field, fetch_metadata
+from proxy.chains import CHAINS_JSON, METADATA_URL, Metadata, atomic_write, block_field, get_json
 
 logger = logging.getLogger('metrics')
 
@@ -36,18 +36,8 @@ SCHEMA = """CREATE TABLE IF NOT EXISTS counters (
 type Counters = dict[str, str]
 
 
-class AddressCounter(TypedDict):
-    gas_usage_count: str
-    token_transfers_count: str
-    transactions_count: str
-    validations_count: str
-    transactions_today: int
-    transactions_last_7_days: int
-    transactions_last_30_days: int
-
-
 class ChainMetrics(TypedDict):
-    apps_counters: dict[str, dict[str, AddressCounter]]
+    apps_counters: dict[str, dict[str, dict[str, str | int]]]
     chain_stats: dict[str, Any]
 
 
@@ -76,17 +66,6 @@ def counters(session: requests.Session, url: str, address: str) -> Counters | No
         return None
 
 
-def chain_stats(session: requests.Session, url: str) -> dict[str, Any] | None:
-    try:
-        response = session.get(f'{url}/api/v2/stats', timeout=10)
-        response.raise_for_status()
-        stats: dict[str, Any] = response.json()
-        return stats
-    except requests.RequestException:
-        logger.warning('Stats failed for %s', url)
-        return None
-
-
 def window(history: Mapping[date, int], days: int) -> int:
     latest = max(history)
     past = [d for d in history if d <= latest - timedelta(days=days)]
@@ -94,14 +73,10 @@ def window(history: Mapping[date, int], days: int) -> int:
     return max(0, history[latest] - base)
 
 
-def counter(history: Mapping[date, Counters]) -> AddressCounter:
+def counter(history: Mapping[date, Counters]) -> dict[str, str | int]:
     totals = {d: int(c['transactions_count']) for d, c in history.items()}
-    latest = history[max(history)]
     return {
-        'gas_usage_count': latest['gas_usage_count'],
-        'token_transfers_count': latest['token_transfers_count'],
-        'transactions_count': latest['transactions_count'],
-        'validations_count': latest['validations_count'],
+        **history[max(history)],
         'transactions_today': window(totals, 1),
         'transactions_last_7_days': window(totals, 7),
         'transactions_last_30_days': window(totals, 30),
@@ -141,9 +116,7 @@ def collect(
         return None
     with ThreadPoolExecutor(8) as pool:
         fetched = list(pool.map(lambda p: counters(session, urls[p[0]], p[1]), missing))
-        stats = dict(
-            zip(urls, pool.map(lambda u: chain_stats(session, u), urls.values()), strict=True)
-        )
+        stats = list(pool.map(lambda u: get_json(session, f'{u}/api/v2/stats'), urls.values()))
     with db:
         db.executemany(
             'INSERT OR REPLACE INTO counters VALUES (?, ?, ?, ?)',
@@ -165,8 +138,8 @@ def collect(
                     for app, addresses in apps(metadata[chain]).items()
                 },
             }
-            for chain in urls
-            if (s := stats[chain] or old.get(chain))
+            for chain, new in zip(urls, stats, strict=True)
+            if (s := new or old.get(chain))
         },
         'gas': fee if fee is not None else previous['gas'] if previous else 0,
         'last_updated': int(time.time()),
@@ -181,7 +154,7 @@ def main() -> None:
     db = sqlite3.connect(STATE / 'metrics.db')
     db.execute(SCHEMA)
     while True:
-        metadata = fetch_metadata(session, network)
+        metadata = get_json(session, METADATA_URL.format(network))
         if metadata is not None and CHAINS_JSON.exists():
             chains = [c['schain']['name'] for c in json.loads(CHAINS_JSON.read_text())]
             previous: MetricsFile | None = (

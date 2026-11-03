@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import signal
 import time
 from collections.abc import Iterable
@@ -12,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 CONF = Path('/app/conf')
 CHILDREN = Path('/proc/1/task/1/children')
+NAME = re.compile(r'[a-z0-9_-]{1,253}')
 
 
 def upstream(name: str, servers: Iterable[str]) -> str:
@@ -24,7 +26,7 @@ def locations(alias: str, name: str) -> str:
     proxy_next_upstream error timeout non_idempotent;
     proxy_next_upstream_tries 2;
     proxy_next_upstream_timeout 10s;
-    proxy_pass http://{name}/;
+    proxy_pass http://http-{name}/;
 }}
 location /v1/ws/{alias} {{
     proxy_set_header Upgrade $http_upgrade;
@@ -40,19 +42,27 @@ location /fs/{alias} {{
 
 def render(chains: Iterable[ChainRecord]) -> dict[Path, str]:
     ups: list[str] = []
-    locs: list[str] = []
+    routes: dict[str, str] = {}
     for chain in chains:
         info = chain['chain_info']
         if not info['http_endpoints']:
             continue
         name = info['schain_name']
+        if not NAME.fullmatch(name):
+            logger.warning('Skipping chain %.100r with an invalid name', name)
+            continue
         ups += [
-            upstream(name, info['http_endpoints']),
+            upstream(f'http-{name}', info['http_endpoints']),
             upstream(f'ws-{name}', info['ws_endpoints']),
             upstream(f'storage-{name}', info['fs_endpoints']),
         ]
+        routes.setdefault(name, name)
         alias = (chain['chain_metadata'] or {}).get('shortAlias')
-        locs += [locations(a, name) for a in (name, alias) if a]
+        if isinstance(alias, str) and NAME.fullmatch(alias):
+            routes[alias] = name
+        elif alias:
+            logger.warning('Skipping alias %.100r of %s with an invalid name', alias, name)
+    locs = [locations(a, name) for a, name in routes.items()]
     return {CONF / 'upstreams.conf': ''.join(ups), CONF / 'locations.conf': ''.join(locs)}
 
 
@@ -64,7 +74,7 @@ def reload() -> bool:
     before = workers()
     os.kill(1, signal.SIGHUP)
     for _ in range(50):
-        with suppress(FileNotFoundError):
+        with suppress(FileNotFoundError, ProcessLookupError):
             if all(
                 b'shutting down' in Path(f'/proc/{p}/cmdline').read_bytes()
                 for p in before & workers()

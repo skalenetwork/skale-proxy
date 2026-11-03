@@ -14,12 +14,12 @@ Public JSON-RPC, WebSocket and filestorage endpoints for SKALE chains, load-bala
 | `MANAGER_CONTRACTS` | proxy | yes | `skale-manager` address or alias |
 | `NETWORK_NAME` | proxy, metrics | yes | SKALE network name; metrics supports `mainnet`, `testnet`, `legacy` and `regression` |
 | `USE_ALB` | nginx | yes | `True` behind an AWS ALB (trusts `X-Forwarded-For` from RFC 1918 ranges), `False` otherwise |
-| `HEARTBEAT_URL` | proxy | no | URL requested after each complete discovery |
+| `HEARTBEAT_URL` | proxy | no | URL requested after each successful discovery that nginx is serving |
 | `ETH_ENDPOINT` | metrics | with `metrics` | Ethereum RPC for the gas price |
 
 ## Run
 
-Put `server.crt` and `server.key` in `data/`, export the environment, then:
+Put `server.crt` and `server.key` in `data/` and the environment in `.env`, then:
 
 ```bash
 docker compose up -d --build --remove-orphans
