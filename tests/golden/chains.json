@@ -1,0 +1,81 @@
+[
+  {
+    "schain": {
+      "name": "elated-tan-skat",
+      "schain_hash": "0000079f99296b6e"
+    },
+    "nodes": [
+      {
+        "nodeID": 1,
+        "nodeName": "a",
+        "basePort": 10000,
+        "httpRpcPort": 10003,
+        "httpsRpcPort": 10008,
+        "wsRpcPort": 10002,
+        "wssRpcPort": 10007,
+        "ip": "10.0.0.1",
+        "domain": "127.0.0.1",
+        "http_endpoint_ip": "http://10.0.0.1:10003",
+        "https_endpoint_ip": "https://10.0.0.1:10008",
+        "ws_endpoint_ip": "ws://10.0.0.1:10002",
+        "wss_endpoint_ip": "wss://10.0.0.1:10007",
+        "http_endpoint_domain": "http://127.0.0.1:10003",
+        "https_endpoint_domain": "https://127.0.0.1:10008",
+        "ws_endpoint_domain": "ws://127.0.0.1:10002",
+        "wss_endpoint_domain": "wss://127.0.0.1:10007",
+        "block_ts": 100
+      },
+      {
+        "nodeID": 2,
+        "nodeName": "b",
+        "basePort": 10128,
+        "httpRpcPort": 10131,
+        "httpsRpcPort": 10136,
+        "wsRpcPort": 10130,
+        "wssRpcPort": 10135,
+        "ip": "10.0.0.2",
+        "domain": "127.0.0.2",
+        "http_endpoint_ip": "http://10.0.0.2:10131",
+        "https_endpoint_ip": "https://10.0.0.2:10136",
+        "ws_endpoint_ip": "ws://10.0.0.2:10130",
+        "wss_endpoint_ip": "wss://10.0.0.2:10135",
+        "http_endpoint_domain": "http://127.0.0.2:10131",
+        "https_endpoint_domain": "https://127.0.0.2:10136",
+        "ws_endpoint_domain": "ws://127.0.0.2:10130",
+        "wss_endpoint_domain": "wss://127.0.0.2:10135",
+        "block_ts": -1
+      }
+    ],
+    "chain_info": {
+      "schain_name": "elated-tan-skat",
+      "chain_id": "0x0000079f99296",
+      "http_endpoints": [
+        "127.0.0.1:10003"
+      ],
+      "ws_endpoints": [
+        "127.0.0.1:10002"
+      ],
+      "fs_endpoints": [
+        "127.0.0.1"
+      ]
+    },
+    "chain_metadata": {
+      "shortAlias": "europa"
+    }
+  },
+  {
+    "schain": {
+      "name": "lonely-chain",
+      "schain_hash": "ab"
+    },
+    "nodes": [],
+    "chain_info": {
+      "schain_name": "lonely-chain",
+      "chain_id": "0xab",
+      "http_endpoints": [],
+      "ws_endpoints": [],
+      "fs_endpoints": []
+    },
+    "chain_metadata": null
+  }
+]

@@ -1,23 +1,10 @@
-FROM python:3.13.9-slim-trixie AS builder
-
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
-
-WORKDIR /usr/src/proxy
-
-COPY pyproject.toml ./
-
-RUN uv pip install --prerelease=allow --system --no-cache .
-
-FROM python:3.13.9-slim-trixie
-
-WORKDIR /usr/src/proxy
-
-COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
-
-COPY . .
-
-ENV PYTHONPATH="/usr/src/proxy:/usr/lib/python3/dist-packages/"
-ENV COLUMNS=80
-
-CMD ["python", "/usr/src/proxy/proxy/main.py"]
+FROM python:3.14.10-slim-trixie@sha256:930e1abba7c4e8f96ed93e8012c35d174d7732752731bbd5e8e757d7ec6f3966
+WORKDIR /app
+ENV UV_COMPILE_BYTECODE=1 PATH=/app/.venv/bin:$PATH
+COPY pyproject.toml uv.lock ./
+RUN --mount=from=ghcr.io/astral-sh/uv:0.13.6@sha256:af22a52f5eafef3d78e551599d405c02df61919d18028f0cea8eda93bc9986d0,source=/uv,target=/bin/uv \
+    uv sync --locked --no-dev --no-cache
+COPY proxy proxy
+RUN install -d -o 65534 -g 65534 /var/lib/metrics
+USER 65534
+CMD ["python", "-m", "proxy"]

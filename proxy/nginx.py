@@ -1,116 +1,99 @@
-#   -*- coding: utf-8 -*-
-#
-#   This file is part of SKALE Proxy
-#
-#   Copyright (C) 2022-Present SKALE Labs
-#
-#   This program is free software: you can redistribute it and/or modify
-#   it under the terms of the GNU Affero General Public License as published by
-#   the Free Software Foundation, either version 3 of the License, or
-#   (at your option) any later version.
-#
-#   This program is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU Affero General Public License for more details.
-#
-#   You should have received a copy of the GNU Affero General Public License
-#   along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 import logging
 import os
-import shutil
+import re
+import signal
+import time
+from collections.abc import Iterable
+from contextlib import suppress
 from pathlib import Path
 
-import docker
-
-from proxy.config import (
-    CHAINS_FOLDER,
-    CONTAINER_RUNNING_STATUS,
-    NGINX_CONTAINER_NAME,
-    SCHAIN_NGINX_TEMPLATE,
-    TMP_CHAINS_FOLDER,
-    TMP_UPSTREAMS_FOLDER,
-    UPSTREAM_NGINX_TEMPLATE,
-    UPSTREAMS_FOLDER,
-)
-from proxy.helper import process_template
+from proxy.chains import ChainRecord, atomic_write
 
 logger = logging.getLogger(__name__)
-docker_client = docker.DockerClient()
+
+CONF = Path('/app/conf')
+CHILDREN = Path('/proc/1/task/1/children')
+NAME = re.compile(r'[a-z0-9_-]{1,253}')
 
 
-def update_nginx_configs(schains_endpoints: list) -> None:
-    generate_nginx_configs(schains_endpoints)
-    move_nginx_configs()
-    monitor_nginx_container()
+def upstream(name: str, servers: Iterable[str]) -> str:
+    servers_conf = ''.join(f'    server {s} max_conns=500 resolve;\n' for s in servers)
+    return f'upstream {name} {{\n    zone {name} 64k;\n    ip_hash;\n{servers_conf}}}\n'
 
 
-def move_nginx_configs():
-    """Moves nginx configs from the temporary directories to the main folders"""
-    logger.info('Moving nginx configs from temporary directories...')
-    shutil.rmtree(CHAINS_FOLDER, ignore_errors=True)
-    shutil.rmtree(UPSTREAMS_FOLDER, ignore_errors=True)
-    shutil.move(TMP_CHAINS_FOLDER, CHAINS_FOLDER)
-    shutil.move(TMP_UPSTREAMS_FOLDER, UPSTREAMS_FOLDER)
-    Path(TMP_CHAINS_FOLDER).mkdir(parents=True, exist_ok=True)
-    Path(TMP_UPSTREAMS_FOLDER).mkdir(parents=True, exist_ok=True)
-    logger.info('nginx configs moved')
+def locations(alias: str, name: str) -> str:
+    return f"""location /v1/{alias} {{
+    proxy_next_upstream error timeout non_idempotent;
+    proxy_next_upstream_tries 2;
+    proxy_next_upstream_timeout 10s;
+    proxy_pass http://http-{name}/;
+}}
+location /v1/ws/{alias} {{
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection upgrade;
+    proxy_pass http://ws-{name}/;
+}}
+location /fs/{alias} {{
+    rewrite /fs/{alias}/(.*) /{name}/$1 break;
+    proxy_pass http://storage-{name}/;
+}}
+"""
 
 
-def monitor_nginx_container(d_client=None):
-    logger.info('Going to restart nginx container')
-    d_client = d_client or docker_client
-    nginx_container = d_client.containers.get(NGINX_CONTAINER_NAME)
-
-    if is_container_running(nginx_container):
-        reload_nginx(nginx_container)
-    else:
-        logger.info('nginx container is not running, trying to restart')
-        nginx_container.restart()
-
-
-def reload_nginx(container) -> int:
-    res = container.exec_run(cmd='nginx -s reload')
-    if res != 0:
-        logger.warning('Could not reload nginx configuration, check out nginx logs')
-    else:
-        logger.info('Successfully reloaded nginx service')
-    return res
-
-
-def is_container_running(container) -> bool:
-    return container.status == CONTAINER_RUNNING_STATUS
-
-
-def generate_nginx_configs(schains_endpoints: list) -> None:
-    logger.info('Generating nginx configs...')
-    for schain_endpoints in schains_endpoints:
-        name = schain_endpoints['chain_info']['schain_name']
-        if not schain_endpoints or len(schain_endpoints['chain_info']['http_endpoints']) == 0:
-            logger.warning(f'No endpoints found, skipping config generation for {name}')
+def render(chains: Iterable[ChainRecord]) -> dict[Path, str]:
+    ups: list[str] = []
+    routes: dict[str, str] = {}
+    for chain in chains:
+        info = chain['chain_info']
+        if not info['http_endpoints']:
             continue
-
-        short_alias = None
-        if (
-            'chain_metadata' in schain_endpoints
-            and schain_endpoints['chain_metadata'] is not None
-            and 'shortAlias' in schain_endpoints['chain_metadata']
-        ):
-            short_alias = schain_endpoints['chain_metadata']['shortAlias']
-
-        logger.info(f'Processing template for {name}...')
-        process_nginx_config_template(schain_endpoints['chain_info'], short_alias)
-
-
-def process_nginx_config_template(chain_info: dict, short_alias: str | None) -> None:
-    chain_dest = os.path.join(TMP_CHAINS_FOLDER, f'{chain_info["schain_name"]}.conf')
-    upstream_dest = os.path.join(TMP_UPSTREAMS_FOLDER, f'{chain_info["schain_name"]}.conf')
-    chain_info['short_alias'] = short_alias
-    process_template(SCHAIN_NGINX_TEMPLATE, chain_dest, chain_info)
-    process_template(UPSTREAM_NGINX_TEMPLATE, upstream_dest, chain_info)
+        name = info['schain_name']
+        if not NAME.fullmatch(name):
+            logger.warning('Skipping chain %.100r with an invalid name', name)
+            continue
+        ups += [
+            upstream(f'http-{name}', info['http_endpoints']),
+            upstream(f'ws-{name}', info['ws_endpoints']),
+            upstream(f'storage-{name}', info['fs_endpoints']),
+        ]
+        routes.setdefault(name, name)
+        alias = (chain['chain_metadata'] or {}).get('shortAlias')
+        if isinstance(alias, str) and NAME.fullmatch(alias):
+            routes[alias] = name
+        elif alias:
+            logger.warning('Skipping alias %.100r of %s with an invalid name', alias, name)
+    locs = [locations(a, name) for a, name in routes.items()]
+    return {CONF / 'upstreams.conf': ''.join(ups), CONF / 'locations.conf': ''.join(locs)}
 
 
-if __name__ == '__main__':
-    res = generate_nginx_configs([])
-    print(res)
+def workers() -> set[int]:
+    return {int(pid) for pid in CHILDREN.read_text().split()}
+
+
+def reload() -> bool:
+    before = workers()
+    os.kill(1, signal.SIGHUP)
+    for _ in range(50):
+        with suppress(FileNotFoundError, ProcessLookupError):
+            if all(
+                b'shutting down' in Path(f'/proc/{p}/cmdline').read_bytes()
+                for p in before & workers()
+            ):
+                return True
+        time.sleep(0.2)
+    return False
+
+
+def apply(files: dict[Path, str]) -> bool:
+    old = {path: path.read_text() if path.exists() else '' for path in files}
+    if old == files:
+        return True
+    for path, text in files.items():
+        atomic_write(path, text)
+    if reload():
+        logger.info('nginx reloaded')
+        return True
+    for path, previous in old.items():
+        atomic_write(path, previous)
+    logger.error('nginx rejected the new config, previous config restored')
+    return False
