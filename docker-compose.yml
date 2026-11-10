@@ -5,9 +5,21 @@ x-logging: &logging
     max-file: "5"
 
 services:
+  pid-holder:
+    image: nginx:1.30.6@sha256:66b50d24288dba67f3d000b31223daefc4868c58d29aaacb6a4ff9771597b5eb
+    entrypoint: [sleep, infinity]
+    init: true
+    network_mode: none
+    cap_drop: [ALL]
+    read_only: true
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    logging: *logging
+
   nginx:
     image: nginx:1.30.6@sha256:66b50d24288dba67f3d000b31223daefc4868c58d29aaacb6a4ff9771597b5eb
     network_mode: host
+    pid: service:pid-holder
     restart: unless-stopped
     ulimits:
       nofile: 32768
@@ -25,7 +37,7 @@ services:
 
   proxy:
     build: .
-    pid: service:nginx
+    pid: service:pid-holder
     user: "0:0"
     cap_drop: [ALL]
     read_only: true

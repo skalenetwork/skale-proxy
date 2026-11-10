@@ -144,9 +144,14 @@ def test_apply_keeps_accepted_config(
     assert (kept.read_text(), fresh.read_text()) == expected
 
 
-def test_unhealthy_chain_routes_all_nodes() -> None:
+def test_unhealthy_chain_routes_all_nodes(caplog: pytest.LogCaptureFixture) -> None:
     info = chain_record(CHAIN, dict.fromkeys(NODES, -1), {})['chain_info']
     assert info['fs_endpoints'] == ['127.0.0.1', '127.0.0.2']
+    assert caplog.messages == [
+        'Leaving out node a (127.0.0.1) of elated-tan-skat: block ts -1, chain head 0',
+        'Leaving out node b (127.0.0.2) of elated-tan-skat: block ts -1, chain head 0',
+        'No healthy node in elated-tan-skat, routing to all of its nodes',
+    ]
 
 
 @pytest.mark.parametrize(
