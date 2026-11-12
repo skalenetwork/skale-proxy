@@ -144,9 +144,28 @@ def test_apply_keeps_accepted_config(
     assert (kept.read_text(), fresh.read_text()) == expected
 
 
-def test_unhealthy_chain_routes_all_nodes() -> None:
+@pytest.mark.parametrize(('answer', 'left'), [('ok', 'ok'), ('failed', 'failed'), ('reload', '')])
+def test_reload_waits_for_nginx_answer(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, answer: str, left: str
+) -> None:
+    monkeypatch.setattr(nginx, 'STATUS', tmp_path / 'status')
+    nginx.STATUS.write_text('ok')
+    monkeypatch.setattr(
+        'proxy.nginx.time.sleep',
+        lambda _: nginx.STATUS.read_text() == 'reload' and nginx.STATUS.write_text(answer),
+    )
+    assert nginx.reload() is (answer == 'ok')
+    assert nginx.STATUS.read_text() == left
+
+
+def test_unhealthy_chain_routes_all_nodes(caplog: pytest.LogCaptureFixture) -> None:
     info = chain_record(CHAIN, dict.fromkeys(NODES, -1), {})['chain_info']
     assert info['fs_endpoints'] == ['127.0.0.1', '127.0.0.2']
+    assert caplog.messages == [
+        'Leaving out node a (127.0.0.1) of elated-tan-skat: block ts -1, chain head 0',
+        'Leaving out node b (127.0.0.2) of elated-tan-skat: block ts -1, chain head 0',
+        'No healthy node in elated-tan-skat, routing to all of its nodes',
+    ]
 
 
 @pytest.mark.parametrize(

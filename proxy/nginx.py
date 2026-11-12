@@ -1,10 +1,7 @@
 import logging
-import os
 import re
-import signal
 import time
 from collections.abc import Iterable
-from contextlib import suppress
 from pathlib import Path
 
 from proxy.chains import ChainRecord, atomic_write
@@ -12,12 +9,12 @@ from proxy.chains import ChainRecord, atomic_write
 logger = logging.getLogger(__name__)
 
 CONF = Path('/app/conf')
-CHILDREN = Path('/proc/1/task/1/children')
+STATUS = Path('/app/reload/status')
 NAME = re.compile(r'[a-z0-9_-]{1,253}')
 
 
 def upstream(name: str, servers: Iterable[str]) -> str:
-    servers_conf = ''.join(f'    server {s} max_conns=500 resolve;\n' for s in servers)
+    servers_conf = ''.join(f'    server {s} max_conns=4000 resolve;\n' for s in servers)
     return f'upstream {name} {{\n    zone {name} 64k;\n    ip_hash;\n{servers_conf}}}\n'
 
 
@@ -66,21 +63,17 @@ def render(chains: Iterable[ChainRecord]) -> dict[Path, str]:
     return {CONF / 'upstreams.conf': ''.join(ups), CONF / 'locations.conf': ''.join(locs)}
 
 
-def workers() -> set[int]:
-    return {int(pid) for pid in CHILDREN.read_text().split()}
+def serving() -> bool:
+    return STATUS.exists() and time.time() - STATUS.stat().st_mtime < 10
 
 
 def reload() -> bool:
-    before = workers()
-    os.kill(1, signal.SIGHUP)
+    atomic_write(STATUS, 'reload')
     for _ in range(50):
-        with suppress(FileNotFoundError, ProcessLookupError):
-            if all(
-                b'shutting down' in Path(f'/proc/{p}/cmdline').read_bytes()
-                for p in before & workers()
-            ):
-                return True
         time.sleep(0.2)
+        if (status := STATUS.read_text()) != 'reload':
+            return status == 'ok'
+    atomic_write(STATUS, '')
     return False
 
 

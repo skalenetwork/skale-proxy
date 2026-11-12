@@ -24,6 +24,7 @@ from proxy.chains import (
 logger = logging.getLogger('proxy')
 
 INTERVAL = 600
+RETRY_INTERVAL = 30
 
 
 def saved(path: Path) -> Metadata:
@@ -41,12 +42,14 @@ def heartbeat(session: requests.Session, url: str) -> None:
 def main() -> None:
     logging.basicConfig(level=logging.INFO)
     network, heartbeat_url = os.environ['NETWORK_NAME'], os.environ.get('HEARTBEAT_URL')
+    endpoint, contracts = os.environ['ENDPOINT'], os.environ['MANAGER_CONTRACTS']
     session = requests.Session()
-    skale = SkaleManager(os.environ['ENDPOINT'], os.environ['MANAGER_CONTRACTS'])
+    skale: SkaleManager | None = None
     chains: list[Chain] = []
     metadata = saved(CHAINS_JSON)
     while True:
         try:
+            skale = skale or SkaleManager(endpoint, contracts)
             chains, fresh = discover(skale), True
         except Exception:
             fresh = False
@@ -57,9 +60,9 @@ def main() -> None:
             records = [chain_record(c, stamps, metadata) for c in chains]
             if nginx.apply(nginx.render(records)):
                 atomic_write(CHAINS_JSON, json.dumps(records, separators=(',', ':')))
-                if fresh and heartbeat_url:
+                if fresh and heartbeat_url and nginx.serving():
                     heartbeat(session, heartbeat_url)
-        time.sleep(INTERVAL)
+        time.sleep(INTERVAL if fresh else RETRY_INTERVAL)
 
 
 if __name__ == '__main__':

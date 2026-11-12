@@ -175,7 +175,18 @@ def probe(session: requests.Session, chains: Iterable[Chain]) -> dict[Node, int]
 
 def healthy(chain: Chain, stamps: Mapping[Node, int]) -> list[Node]:
     head = median_low([stamps[n] for n in chain.nodes if stamps[n] > 0] or [0])
-    return [n for n in chain.nodes if stamps[n] > 0 and head - stamps[n] <= MAX_LAG]
+    nodes = [n for n in chain.nodes if stamps[n] > 0 and head - stamps[n] <= MAX_LAG]
+    for n in chain.nodes:
+        if n not in nodes:
+            logger.warning(
+                'Leaving out node %s (%s) of %s: block ts %d, chain head %d',
+                n.name,
+                n.domain,
+                chain.name,
+                stamps[n],
+                head,
+            )
+    return nodes
 
 
 def node_record(node: Node, ts: int) -> dict[str, Any]:
@@ -200,7 +211,10 @@ def node_record(node: Node, ts: int) -> dict[str, Any]:
 
 
 def chain_record(chain: Chain, stamps: Mapping[Node, int], metadata: Metadata) -> ChainRecord:
-    nodes = healthy(chain, stamps) or chain.nodes
+    nodes = healthy(chain, stamps)
+    if not nodes and chain.nodes:
+        logger.warning('No healthy node in %s, routing to all of its nodes', chain.name)
+        nodes = list(chain.nodes)
     meta = metadata.get(chain.name)
     return {
         'schain': chain.schain,

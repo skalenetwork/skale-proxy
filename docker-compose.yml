@@ -15,17 +15,18 @@ services:
       NGINX_ENTRYPOINT_LOCAL_RESOLVERS: "1"
     volumes:
       - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./config/reload.sh:/docker-entrypoint.d/90-reload.sh:ro
       - ./config/real-ip/${USE_ALB:?USE_ALB must be True or False}.conf:/etc/nginx/real-ip.conf:ro
       - ./config/resolver.conf.template:/etc/nginx/templates/resolver.conf.template:ro
       - ./conf:/etc/nginx/conf:ro
       - ./data:/data:ro
       - ./www:/usr/share/nginx/www/files:ro
       - metrics:/srv/metrics:ro
+      - reload:/run/reload
     logging: *logging
 
   proxy:
     build: .
-    pid: service:nginx
     user: "0:0"
     cap_drop: [ALL]
     read_only: true
@@ -35,6 +36,7 @@ services:
     volumes:
       - ./conf:/app/conf
       - ./www:/app/www
+      - reload:/app/reload
     logging: *logging
 
   metrics:
@@ -52,3 +54,4 @@ services:
 
 volumes:
   metrics:
+  reload:
