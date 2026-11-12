@@ -1,10 +1,7 @@
 import logging
-import os
 import re
-import signal
 import time
 from collections.abc import Iterable
-from contextlib import suppress
 from pathlib import Path
 
 from proxy.chains import ChainRecord, atomic_write
@@ -12,6 +9,7 @@ from proxy.chains import ChainRecord, atomic_write
 logger = logging.getLogger(__name__)
 
 CONF = Path('/app/conf')
+STATUS = Path('/app/reload/status')
 NAME = re.compile(r'[a-z0-9_-]{1,253}')
 
 
@@ -65,31 +63,17 @@ def render(chains: Iterable[ChainRecord]) -> dict[Path, str]:
     return {CONF / 'upstreams.conf': ''.join(ups), CONF / 'locations.conf': ''.join(locs)}
 
 
-def master() -> int | None:
-    for cmdline in Path('/proc').glob('[0-9]*/cmdline'):
-        with suppress(FileNotFoundError, ProcessLookupError):
-            if cmdline.read_bytes().startswith(b'nginx: master process'):
-                return int(cmdline.parent.name)
-    return None
-
-
-def workers(pid: int) -> set[int]:
-    return {int(p) for p in Path(f'/proc/{pid}/task/{pid}/children').read_text().split()}
+def serving() -> bool:
+    return STATUS.exists() and time.time() - STATUS.stat().st_mtime < 10
 
 
 def reload() -> bool:
-    if (pid := master()) is None:
-        return False
-    before = workers(pid)
-    os.kill(pid, signal.SIGHUP)
+    atomic_write(STATUS, 'reload')
     for _ in range(50):
-        with suppress(FileNotFoundError, ProcessLookupError):
-            if all(
-                b'shutting down' in Path(f'/proc/{p}/cmdline').read_bytes()
-                for p in before & workers(pid)
-            ):
-                return True
         time.sleep(0.2)
+        if (status := STATUS.read_text()) != 'reload':
+            return status == 'ok'
+    atomic_write(STATUS, '')
     return False
 
 

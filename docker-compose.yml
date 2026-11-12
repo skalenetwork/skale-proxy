@@ -5,21 +5,9 @@ x-logging: &logging
     max-file: "5"
 
 services:
-  pid-holder:
-    image: nginx:1.30.6@sha256:66b50d24288dba67f3d000b31223daefc4868c58d29aaacb6a4ff9771597b5eb
-    entrypoint: [sleep, infinity]
-    init: true
-    network_mode: none
-    cap_drop: [ALL]
-    read_only: true
-    security_opt: [no-new-privileges:true]
-    restart: unless-stopped
-    logging: *logging
-
   nginx:
     image: nginx:1.30.6@sha256:66b50d24288dba67f3d000b31223daefc4868c58d29aaacb6a4ff9771597b5eb
     network_mode: host
-    pid: service:pid-holder
     restart: unless-stopped
     ulimits:
       nofile: 32768
@@ -27,17 +15,18 @@ services:
       NGINX_ENTRYPOINT_LOCAL_RESOLVERS: "1"
     volumes:
       - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./config/reload.sh:/docker-entrypoint.d/90-reload.sh:ro
       - ./config/real-ip/${USE_ALB:?USE_ALB must be True or False}.conf:/etc/nginx/real-ip.conf:ro
       - ./config/resolver.conf.template:/etc/nginx/templates/resolver.conf.template:ro
       - ./conf:/etc/nginx/conf:ro
       - ./data:/data:ro
       - ./www:/usr/share/nginx/www/files:ro
       - metrics:/srv/metrics:ro
+      - reload:/run/reload
     logging: *logging
 
   proxy:
     build: .
-    pid: service:pid-holder
     user: "0:0"
     cap_drop: [ALL]
     read_only: true
@@ -47,6 +36,7 @@ services:
     volumes:
       - ./conf:/app/conf
       - ./www:/app/www
+      - reload:/app/reload
     logging: *logging
 
   metrics:
@@ -64,3 +54,4 @@ services:
 
 volumes:
   metrics:
+  reload:

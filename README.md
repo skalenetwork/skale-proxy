@@ -2,7 +2,7 @@
 
 Public JSON-RPC, WebSocket and filestorage endpoints for SKALE chains, load-balanced by nginx.
 
-- `nginx`: the official image with a static config. Serves `/v1/<chain>`, `/v1/ws/<chain>`, `/fs/<chain>` and `/files/`.
+- `nginx`: the official image with a static config. Serves `/v1/<chain>`, `/v1/ws/<chain>`, `/fs/<chain>` and `/files/`. `config/reload.sh` runs inside it: when `proxy` asks through the `reload` volume, it runs `nginx -t` and reloads nginx.
 - `proxy`: every 10 minutes discovers chains from `skale-manager`, probes nodes, writes `conf/*.conf` and `www/chains.json`, and reloads nginx when the config changes. If no node of a chain passes the probe, it routes to all of the chain's nodes instead of dropping the chain.
 - `metrics` (`COMPOSE_PROFILES=metrics`): explorer counters and stats into SQLite, published as `/files/metrics.json`. After a cut-over from v2 the 7- and 30-day windows fill up over 30 days, because v2's MySQL history is not migrated.
 

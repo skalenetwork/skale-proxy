@@ -60,7 +60,7 @@ def main() -> None:
             records = [chain_record(c, stamps, metadata) for c in chains]
             if nginx.apply(nginx.render(records)):
                 atomic_write(CHAINS_JSON, json.dumps(records, separators=(',', ':')))
-                if fresh and heartbeat_url and nginx.master():
+                if fresh and heartbeat_url and nginx.serving():
                     heartbeat(session, heartbeat_url)
         time.sleep(INTERVAL if fresh else RETRY_INTERVAL)
 
