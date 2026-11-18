@@ -4,7 +4,7 @@ version = "3.0.0"
 requires-python = ">=3.14"
 dependencies = [
     "requests==2.34.2",
-    "skale.py==8.0dev0",
+    "skale.py==8.0dev3",
 ]
 
 [dependency-groups]
